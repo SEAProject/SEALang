@@ -1,16 +1,20 @@
+const events = require('events');
+
+const IDefaultConfiguration = {
+    tabSize: 4
+}
 
 /*
  * File class (that represent a entire perl file!)
  */ 
 class File {
 
-    constructor({name,isModule = false,tabSize=2}) {
+    constructor({name,isModule = false}) {
         if(typeof (name) !== 'string') {
             throw new TypeError('Invalid name type!');
         }
         this.name = name;
         this.isModule = isModule;
-        this.tabSize = 2;
         this.filecode = '';
 
         /*
@@ -25,7 +29,11 @@ class File {
         this.use('stdlib.boolean',['isBoolean']);
 
         // Add Expression block to the file!
-        this.main = new CodeBlock({tabSize : 0});
+        this.main = new Expr({
+            tabSize: 0,
+            root: void 0,
+            addblock: false
+        });
     }
 
     add(element) {
@@ -62,52 +70,8 @@ class File {
 }
 
 /*
- * CodeBlock Class (represent a block of code).
+ * Print method!
  */
-class CodeBlock {
-
-    constructor({tabSize=2} = {}) {
-        this.elements = [];
-        if(tabSize === 0) {
-            this.tabSpace = '';
-        }
-        else {
-            this.tabSpace = ' '.repeat(tabSize);
-        }
-        this.tabSize = tabSize;
-    }
-
-    breakline() {
-        this.elements.push('\n');
-    }
-
-    add(element) {
-        if(element == undefined) return;
-
-        if(element instanceof Primitive) {
-            if(typeof(element) === 'string') {
-                this.elements.push(element);
-            }
-        }
-        else {
-            this.elements.push(element.toString(this.tabSpace));
-        }
-    }
-
-    toString(tabSpace) {
-        if(this.elements.length === 0) return '';
-        if(tabSpace == undefined) {
-            tabSpace = this.tabSpace;
-        }
-        this.finalStr = '';
-        for(let i = 0,len = this.elements.length;i<len;i++) {
-            this.finalStr+=tabSpace+this.elements[i];
-        }
-        return this.finalStr;
-    }
-
-}
-
 class Print {
 
     constructor(message,newLine) {
@@ -128,54 +92,130 @@ class Print {
 }
 
 /*
- * Expr block code (represent a { expr }). Own scope, own CodeBlock.
+ * Expr block code (represent a { expr }).
  */
-class Expr {
+class Expr extends events {
 
-    constructor({tabSize = 2} = {}) {
-        this.chunk = new CodeBlock({tabSize});
-    } 
-    
+    constructor({ tabSize = IDefaultConfiguration.tabSize, addblock = true } = {}) {
+        super();
+        this.tabSpace = tabSize === 0 ? '' : ' '.repeat(tabSize);
+        this.addblock = addblock;
+        this.rootExpr = void 0;
+        this.childrensExpr = [];
+        this.elements = [];
+        this.scope = {
+            variables: new Map(),
+            routines: new Map()
+        }
+    }
+
+    setRoot(root) {
+        if(root instanceof Expr === false) {
+            throw new Error('Invalid root variable. Instanceof have to be equal to Expr.');
+        }
+        this.rootExpr = root;
+        const redefinedTab = root.tabSpace === '' ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace;
+        this.tabSpace = redefinedTab.repeat(1);
+    }
+
+    breakline() {
+        this.elements.push('\n');
+    }
+
     add(element) {
-        this.chunk.add(element);
+        this.emit('add',element);
+        if(element == undefined) return;
+        if(element === this) return;
+
+        if(this.rootExpr == void 0 && element instanceof Expr) {
+            console.log('set new root...');
+            console.log(this.rootExpr);
+            console.log(element);
+            element.setRoot(this);
+        }
+
+        if(element instanceof Primitive) {
+            this.scope.variables.set(element.name,element);
+        }
+
+        if(element instanceof Routine) {
+            this.scope.routines.set(element.name,element);
+        }
+
+        this.elements.push(element.toString(this.tabSpace));
+    }
+    
+    hasVar(varName) {
+        if(varName == undefined) return false; 
+        return this.scope.variables.has(varName);
+    }
+
+    hasRoutine(routineName) {
+        if(routineName == undefined) return false; 
+        return this.scope.routines.has(routineName);
     }
 
     toString() {
-        return `{\n${this.chunk.toString()}};\n`;
+        if(this.elements.length === 0) return '';
+        let finalStr = '';
+        for(let i = 0,len = this.elements.length;i<len;i++) {
+            finalStr+=this.tabSpace+this.elements[i];
+        }
+        return this.addblock === true ? `{\n${finalStr}${this.rootExpr.tabSpace}};\n` : finalStr;
     }
 
 }
 
 /*
- * Routine block
+ * Routine elements
+ * (Shiting,ReturnStatment and Routine)
  */
+
 class Routine extends Expr {
 
     constructor(name,args = []) {
-        super({});
+        super({
+            addblock: false
+        });
         this.name = name == void 0 ? '' : name;
-        if(args.length > 0) {
-            args = args.map((v) => {
-                return '$'+v;
-            });
-            this.args = `  my (${args.join(',')}) = @_;\n`;
+        if(this.name.slice(-1) !== ' ') {
+            this.name+=' ';
         }
-        else {
-            this.args = '';
-        }
+        this.returnStatment = false;
+        this.returnType = void 0; 
+        this.returnMultiple = false;
+        this.add(new RoutineShifting(args));
     }
 
-    return(values) {
-        if(values instanceof Array) {
+    toString() {
+        return `sub ${this.name}{\n`+super.toString()+'};\n';
+    }
 
+}
+
+class RoutineShifting {
+
+    constructor(variables) {
+        if(variables.length === 0) {
+            throw new Error('Impossible to create a routine Shifting witouth variables...');
         }
-        else {
-
+        this.value = '';
+        if(variables.length > 0) {
+            const finalStr = variables.map((element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
+            this.value = `my (${finalStr}) = @_;\n`;
         }
     }
 
     toString() {
-        return `sub ${this.name}{\n`+this.args+this.chunk.toString()+'};\n';
+        return this.value;
+    }
+
+}
+
+class ReturnStatment {
+
+    constructor() {
+
     }
 
 }
@@ -188,16 +228,17 @@ const IConditionBlock = new Set(['if','else','elif']);
 class Condition extends Expr {
 
     constructor(cond,expr = 'true') {
-        super({});
+        super();
         if(IConditionBlock.has(cond) === false) {
             throw new Error('Unknown condition type!');
         }
         this.cond = cond;
-        this.expr = expr instanceof Primitive ? `\$${expr.name}->valueOf() == 1` :expr;
+        this.expr = expr instanceof Primitive ? `\$${expr.name}->valueOf() == 1` : expr;
+        this.expr = this.expr.replace(';','').replace('\n','');
     }
 
     toString() {
-        return `${this.cond} (${this.expr}) {\n`+this.chunk.toString()+'}\n';
+        return `${this.cond} (${this.expr}) `+super.toString();
     }
 
 }
@@ -208,7 +249,7 @@ class Condition extends Expr {
 class While extends Expr {
 
     constructor(SEAElement) {
-        super({});
+        super();
     }
 
 }
@@ -361,7 +402,10 @@ class Primitive {
                     final.push(element);
                 }
                 else {
-                    if(element instanceof Expr) {
+                    if(element instanceof Primitive) {
+                        final.push(`\$${element.name}`);
+                    }
+                    else if(element instanceof Expr) {
                         final.push(element.toString());
                     }
                 }
@@ -429,7 +473,6 @@ class SEABoolean extends Primitive {
 // Export every schema class!
 module.exports = {
     File,
-    CodeBlock,
     Expr,
     Routine,
     Condition,

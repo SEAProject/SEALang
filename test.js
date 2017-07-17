@@ -1,7 +1,6 @@
 const {
     File,
     Routine,
-    CodeBlock,
     Expr,
     Condition,
     While,
@@ -14,33 +13,28 @@ const {
 
 const perlCode = new File({
     name: 'test',
-    isModule: false,
-    tabSize: 2
+    isModule: false
 });
 
 // Routine test!
 perlCode.main.breakline();
-const SubTest = new Routine('test',['aArg']);
-const helloVar = new SEAString('hello',' hello world! ');
+const SubTest   = new Routine('test',['aArg']);
+const helloVar  = new SEAString('hello',' hello world! ');
+const secondVar = new SEAString('secondVar','hello world!');
+
 SubTest.add(Primitive.constructorOf(helloVar));
+SubTest.add(Primitive.constructorOf(secondVar));
 SubTest.add(Primitive.methodOf(helloVar,'trim'));
-SubTest.add(Primitive.methodOf(helloVar,'isEqual',['$aArg']));
-SubTest.add(new Print(helloVar,true)); 
+
+const ifEqual = new Condition('if',Primitive.methodOf(helloVar,'isEqual',[secondVar]));
+ifEqual.setRoot(perlCode.main);
+ifEqual.on('add',element => {
+    console.log(ifEqual.tabSpace.length);
+});
+ifEqual.add(new Print(helloVar,true)); 
+SubTest.add(ifEqual);
+
 perlCode.add(SubTest);
 
-// Boolean test!
-perlCode.main.breakline(); 
-const BoolT = new SEABoolean('boolt',true);
-perlCode.add(Primitive.constructorOf(BoolT));
-const ifboolTrue = new Condition('if',BoolT);
-ifboolTrue.add(new Print("boolt is true!",true));
-perlCode.add(ifboolTrue);
-
-// Integer test !
-perlCode.main.breakline(); 
-const BlockT = new Expr(); 
-const IntegerT = new SEAInteger('integert',500);
-BlockT.add(Primitive.constructorOf(IntegerT));
-perlCode.add(BlockT);
-
+console.log('--------------------------------\n\n');
 perlCode.write();
