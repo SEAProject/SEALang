@@ -100,7 +100,7 @@ class Expr extends events {
         super();
         this.tabSpace = tabSize === 0 ? '' : ' '.repeat(tabSize);
         this.addblock = addblock;
-        this.rootExpr = void 0;
+        this.rootExpr = undefined;
         this.childrensExpr = [];
         this.elements = [];
         this.scope = {
@@ -114,8 +114,7 @@ class Expr extends events {
             throw new Error('Invalid root variable. Instanceof have to be equal to Expr.');
         }
         this.rootExpr = root;
-        const redefinedTab = root.tabSpace === '' ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace;
-        this.tabSpace = redefinedTab.repeat(1);
+        this.tabSpace = root.tabSpace.length === 0 ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace+' '.repeat(IDefaultConfiguration.tabSize);
     }
 
     breakline() {
@@ -127,11 +126,8 @@ class Expr extends events {
         if(element == undefined) return;
         if(element === this) return;
 
-        if(this.rootExpr == void 0 && element instanceof Expr) {
-            console.log('set new root...');
-            console.log(this.rootExpr);
-            console.log(element);
-            element.setRoot(this);
+        if(element instanceof Expr && "undefined" === typeof(element.rootExpr)) {
+            //element.setRoot(this);
         }
 
         if(element instanceof Primitive) {
@@ -227,8 +223,8 @@ const IConditionBlock = new Set(['if','else','elif']);
 
 class Condition extends Expr {
 
-    constructor(cond,expr = 'true') {
-        super();
+    constructor(cond,expr) {
+        super({});
         if(IConditionBlock.has(cond) === false) {
             throw new Error('Unknown condition type!');
         }

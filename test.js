@@ -27,10 +27,7 @@ SubTest.add(Primitive.constructorOf(secondVar));
 SubTest.add(Primitive.methodOf(helloVar,'trim'));
 
 const ifEqual = new Condition('if',Primitive.methodOf(helloVar,'isEqual',[secondVar]));
-ifEqual.setRoot(perlCode.main);
-ifEqual.on('add',element => {
-    console.log(ifEqual.tabSpace.length);
-});
+ifEqual.setRoot(SubTest);
 ifEqual.add(new Print(helloVar,true)); 
 SubTest.add(ifEqual);
 
