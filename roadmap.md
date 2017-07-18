@@ -10,6 +10,7 @@
 - Work on a SIG implementation with Routine Object!
 - Implement argv!
 - Implement exit method!
+- Implement dump method!
 - Implement evaluation.
 
 # Roadmap (Compiler) 

@@ -49,9 +49,15 @@ class Expr extends events {
             throw new Error('Expr closed... Impossible to add new element!');
         }
 
-        if(element == undefined) return;
+        // When we try to add an undefined value!
+        if("undefined" === typeof(element)) return;
+
+        // When we try to add this to this...
         if(element === this) return;
 
+        /*
+         * When we add multiple element in row!
+         */
         if(element instanceof Array) {
             for(let i = 0,len = element.length;i<len;i++) {
                 this.add(element[i]);
@@ -59,6 +65,9 @@ class Expr extends events {
             return;
         }
 
+        /*
+         * When the element is a perl lib.
+         */
         const rootDefined = "undefined" === typeof(element.rootExpr);
         if(element instanceof Dependency) {
             if(rootDefined) {
@@ -75,6 +84,9 @@ class Expr extends events {
             }
         }
 
+        /*
+         * When the element is a return statment (for a routine).
+         */
         if(element instanceof ReturnStatment) {
             if(this instanceof Routine) {
                 this.elements.push(element.toString());
@@ -86,19 +98,34 @@ class Expr extends events {
             }
         }
 
+        /*
+         * When the element is a another Expr with no root defined.
+         */
         if(element instanceof Expr && rootDefined === true) {
             element.setRoot(this);
         }
 
-        if(element instanceof Primitive) {
-            this.scope.variables.set(element.name,element);
+        /*
+         * Set SIG routine root!
+         */
+        if(element instanceof SIG) {
+            element.routine.setRoot(this);
         }
 
+        /*
+         * Register variables and routines for seeker mechanism.
+         */
+        let PrimeConstructor;
+        if(element instanceof Primitive) {
+            this.scope.variables.set(element.name,element);
+            PrimeConstructor = Primitive.constructorOf(element);
+        }
         if(element instanceof Routine) {
             this.scope.routines.set(element.name,element);
         }
 
-        this.elements.push(element.toString());
+        // Final push!
+        this.elements.push( "undefined" === typeof(PrimeConstructor) ? element.toString() : PrimeConstructor);
     }
     
     hasVar(varName) {
@@ -111,13 +138,18 @@ class Expr extends events {
         return this.scope.routines.has(routineName);
     }
 
+    get tab() {
+        return this.tabSpace;
+    }
+
     toString() {
         if(this.elements.length === 0) return '';
         let finalStr = '';
         for(let i = 0,len = this.elements.length;i<len;i++) {
-            finalStr+=this.tabSpace+this.elements[i];
+            finalStr+=this.tab+this.elements[i];
         }
-        return this.addblock === true ? `{\n${finalStr}${this.rootExpr.tabSpace}};\n` : finalStr;
+        const localTab = "undefined" === typeof(this.rootExpr) ? this.tab : this.rootExpr.tabSpace;
+        return this.addblock === true ? `{\n${finalStr}${localTab}};\n` : finalStr;
     }
 
 }
@@ -151,7 +183,6 @@ class File extends Expr {
             this.add(new Dependency(DepName));
         });
         this.headerDone = true;
-        this.process = new Process();
     }
 
     /*
@@ -215,32 +246,25 @@ class Print {
 }
 
 /*
- * Process class
+ * Process var
  */
-class Process extends events {
-
-    constructor() {
-        super();
-    }
-
-    exit(code = 0) {
-        this.emit('exit',code);
-    }
-
+const Process = {
+    exit: (code = 0) => `exit(${code});\n`
 }
 
 /*
  * Routine elements
  * (Shiting,ReturnStatment and Routine)
  */
+const SpaceChar = ' '.charCodeAt(0);
 class Routine extends Expr {
 
     constructor({name,args = [],shifting = false}) {
-        super({
-            addblock: false
-        });
-        this.name = name == void 0 ? '' : name;
-        if(this.name.slice(-1) !== ' ') {
+        super({});
+        this.anonymous = "undefined" === typeof(name);
+        this.name = this.anonymous === true ? '' : name;
+        const charCode = this.name.slice(-1).charCodeAt(0);
+        if(Number.isNaN(charCode) === false && charCode !== SpaceChar) {
             this.name+=' ';
         }
         this.returnStatment = false;
@@ -250,7 +274,7 @@ class Routine extends Expr {
     }
 
     toString() {
-        return `sub ${this.name}{\n`+super.toString()+'};\n';
+        return `sub ${this.name}`+super.toString();
     }
 
 }
@@ -262,19 +286,25 @@ class RoutineShifting {
 
     constructor(variables,shifting) {
         this.value = '';
-        if(variables.length > 0) {
-            if(shifting) {
-                let finalStr = '';
-                variables.forEach( (element) => {
-                    const elName = element instanceof Primitive ? `\$${element.name}` : '$'+element;
-                    finalStr+='my '+elName+' = shift;\n';
-                });
-                this.value = finalStr;
+        if(variables instanceof Array) {
+            if(variables.length > 0) {
+                if(shifting) {
+                    let finalStr = '';
+                    variables.forEach( (element) => {
+                        const elName = element instanceof Primitive ? `\$${element.name}` : '$'+element;
+                        finalStr+='my '+elName+' = shift;\n';
+                    });
+                    this.value = finalStr;
+                }
+                else {
+                    const finalStr = variables.map( (element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
+                    this.value = `my (${finalStr}) = @_;\n`;
+                }
             }
-            else {
-                const finalStr = variables.map( (element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
-                this.value = `my (${finalStr}) = @_;\n`;
-            }
+        }
+        else {
+            const elName = variables instanceof Primitive ? `\$${variables.name}` : '$'+variables;
+            this.value = 'my '+elName+' = shift;\n';
         }
     }
 
@@ -355,6 +385,19 @@ class While extends Expr {
 
     constructor(SEAElement) {
         super();
+        if(SEAElement instanceof HashMap) {
+
+        }
+        else if(SEAElement instanceof Arr) {
+
+        }
+        else {
+            throw new Error('Unsupported type for While block!');
+        }
+    }
+
+    toString() {
+        return '{\nmy $i = 0; };\n';
     }
 
 }
@@ -383,11 +426,18 @@ const IAvailableSIG = new Set([
 class SIG {
 
     constructor(code,routine) {
-
+        if(IAvailableSIG.has(code) === false) {
+            throw new Error(`Invalid SIG ${code}!`);
+        }
+        if(routine instanceof Routine === false) {
+            throw new Error('Please define a valid routine!');
+        }
+        this.code = code;
+        this.routine = routine;
     }
 
     toString() {
-
+        return `\$SIG{${this.code}} = `+this.routine.toString();
     }
 
 }
@@ -647,11 +697,13 @@ class HashMap extends Primitive {
 // Export every schema class!
 module.exports = {
     File,
+    Process,
     Dependency,
     Expr,
     Routine,
     ReturnStatment,
     Condition,
+    SIG,
     While,
     Str,
     Int,
