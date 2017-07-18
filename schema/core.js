@@ -240,6 +240,9 @@ class Routine extends Expr {
 
 }
 
+/*
+ * Routine Shifting
+ */
 class RoutineShifting {
 
     constructor(variables,shifting) {
@@ -266,6 +269,9 @@ class RoutineShifting {
 
 }
 
+/*
+ * Return routine statment!
+ */
 class ReturnStatment {
 
     constructor(expr) {
@@ -506,7 +512,7 @@ class Primitive {
 class Str extends Primitive {
 
     constructor(varName,valueOf) {
-        if(varName == undefined || typeof(valueOf) !== 'string') {
+        if("undefined" === typeof(varName) || typeof(valueOf) !== 'string') {
             throw new Error('Invalid String');
         }
         super({
@@ -524,7 +530,7 @@ class Str extends Primitive {
 class Int extends Primitive {
 
     constructor(varName,valueOf) {
-        if(varName == undefined || typeof(valueOf) !== 'number') {
+        if("undefined" === typeof(varName) || typeof(valueOf) !== 'number') {
             throw new Error('Invalid Integer');
         }
         super({
@@ -542,7 +548,7 @@ class Int extends Primitive {
 class Bool extends Primitive {
 
     constructor(varName,valueOf) {
-        if(varName == undefined || typeof(valueOf) !== 'boolean') {
+        if("undefined" === typeof(varName) || typeof(valueOf) !== 'boolean') {
             throw new Error('Invalid Boolean');
         }
         super({
@@ -560,10 +566,13 @@ class Bool extends Primitive {
 class Arr extends Primitive {
 
     constructor(varName,valueOf) {
+        if("undefined" === typeof(varName) || valueOf instanceof Array === false) {
+            throw new Error('Invalid Array');
+        }
         super({
             type: 'array',
             name: varName,
-            value: valueOf ? 1 : 0,
+            value: valueOf,
         });
     }
 
