@@ -18,7 +18,11 @@ const perlCode = new File({
 
 // Routine test!
 perlCode.breakline();
-const SubTest   = new Routine('test',['aArg']);
+const SubTest   = new Routine({
+    name: 'test',
+    args: ['aArg'],
+    shifting: true
+});
 const helloVar  = new SEAString('hello',' hello world! ');
 const secondVar = new SEAString('secondVar','hello world!');
 

@@ -205,7 +205,7 @@ class Print {
 
 class Routine extends Expr {
 
-    constructor(name,args = []) {
+    constructor({name,args = [],shifting = false}) {
         super({
             addblock: false
         });
@@ -216,7 +216,7 @@ class Routine extends Expr {
         this.returnStatment = false;
         this.returnType = void 0; 
         this.returnMultiple = false;
-        this.add(new RoutineShifting(args));
+        this.add(new RoutineShifting(args,shifting));
     }
 
     toString() {
@@ -227,18 +227,25 @@ class Routine extends Expr {
 
 class RoutineShifting {
 
-    constructor(variables) {
-        if(variables.length === 0) {
-            throw new Error('Impossible to create a routine Shifting witouth variables...');
-        }
+    constructor(variables,shifting) {
         this.value = '';
         if(variables.length > 0) {
-            const finalStr = variables.map((element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
-            this.value = `my (${finalStr}) = @_;\n`;
+            if(shifting) {
+                let finalStr = '';
+                variables.forEach( (element) => {
+                    const elName = element instanceof Primitive ? `\$${element.name}` : '$'+element;
+                    finalStr+='my '+elName+' = shift;\n';
+                });
+                this.value = finalStr;
+            }
+            else {
+                const finalStr = variables.map( (element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
+                this.value = `my (${finalStr}) = @_;\n`;
+            }
         }
     }
 
-    toString() {
+    toString() { 
         return this.value;
     }
 

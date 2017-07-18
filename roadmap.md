@@ -1,6 +1,6 @@
 # Roadmap 
 
-- Routine arguments with shift.
+- [x] Routine arguments with shift.
 - Routine return statment support. 
 - Work on while prototype. 
 - Work on map primitive prototype.
