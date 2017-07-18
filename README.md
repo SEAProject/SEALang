@@ -10,9 +10,9 @@ sub echo(Scalar k,Scalar v)
     print("key => $k, value => $v")
 end
 
-Array<Scalar> arr = (5,10,15)
-# Or tell to the linter the type of the values in the array
-# Array<Integer> arr = (5,10,15)
+Array<Scalar> myArr (5,10,15)
+// Or tell to the linter the type of the values in the array
+// Array<Integer> myArr (5,10,15)
 arr.push[25][30].reverse.forEach(echo)
 
 String hello = 'hello world'
@@ -23,11 +23,15 @@ if test
     // true
 end
 
-Map<Integer> _t
+Map<Integer> _t ( c => 10 )
 _t->a = 5
 _t->b = 10
 println(_t->a)
 _t.forEach( (Scalar k,Integer v) => print("key => $k, value => $v\n") )
+
+Hash test {
+    customVar => 'hash type!!!'
+}
 ```
 
 And the compiled Perl5 version : 
@@ -60,7 +64,7 @@ if($test->true) {
     # true !
 }
 
-my $_t = Hashmap->new;
+my $_t = Hashmap->new({c=>10});
 $_t->set('a',stdlib::integer->new(5));
 $_t->set('b',stdlib::integer->new(10));
 print "$_t->get('a')\n";
@@ -68,6 +72,10 @@ $_t->forEach(sub {
     my ($k,v) = @_;
     print("key => $k, value => $v->valueOf()\n");
 });
+
+my $hash = {
+    customVar => "hash type!!!"
+}
 ```
 
 ---
