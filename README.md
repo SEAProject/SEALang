@@ -10,24 +10,24 @@ sub echo(Scalar k,Scalar v) {
     print("key => $k, value => $v");
 }
 
-Array arr = (5,10,15);
-arr.push(25);
-arr.reverse;
-arr.forEach( echo );
+Array<Scalar> arr = (5,10,15);
+# Or tell to the linter the type of the values in the array
+# Array<Integer> arr = (5,10,15);
+arr.push[25][30].reverse.forEach(echo);
 
 String hello = 'hello world'; 
-println(hello);
-println(typeof(hello) eq String);
+println[hello][typeof(hello) eq String];
 
 Boolean test = true;
 if test {
     # true
 }
 
-Map _t; 
-_t.set('a',5);
-_t.set('b',10);
-_t.forEach( (Scalar k,Scalar v) => print("key => $k, value => $v") );
+Map<Integer> _t; 
+_t->a = 5;
+_t->b = 10;
+println(_t->a);
+_t.forEach( (Scalar k,Integer v) => print("key => $k, value => $v\n") );
 ```
 
 And the compiled Perl5 version : 
@@ -44,6 +44,7 @@ my $echo = sub {
 
 my $arr = Array->new((5,10,15));
 $arr->push(25);
+$arr->push(30);
 $arr->reverse;
 $arr->forEach( $echo );
 
@@ -60,10 +61,11 @@ if($test->true) {
 }
 
 my $_t = Hashmap->new;
-$_t->set('a',5);
-$_t->set('b',10);
+$_t->set('a',stdlib::integer->new(5));
+$_t->set('b',stdlib::integer->new(10));
+print "$_t->get('a')\n";
 $_t->forEach(sub {
     my ($k,v) = @_;
-    print("key => $k, value => $v");
+    print("key => $k, value => $v->valueOf()\n");
 });
 ```
