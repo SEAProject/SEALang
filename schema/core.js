@@ -5,93 +5,6 @@ const IDefaultConfiguration = {
 }
 
 /*
- * File class (that represent a entire perl file!)
- */ 
-class File {
-
-    constructor({name,isModule = false}) {
-        if(typeof (name) !== 'string') {
-            throw new TypeError('Invalid name type!');
-        }
-        this.name = name;
-        this.isModule = isModule;
-        this.filecode = '';
-
-        /*
-         * Add default package(s) dependencie(s) for SEALang
-         */
-        this.use('strict');
-        this.use('warnings');
-        this.use('stdlib.array',['isArray']);
-        this.use('stdlib.hashmap',['isHashMap']);
-        this.use('stdlib.integer',['isInteger']);
-        this.use('stdlib.string',['isString']);
-        this.use('stdlib.boolean',['isBoolean']);
-
-        // Add Expression block to the file!
-        this.main = new Expr({
-            tabSize: 0,
-            root: void 0,
-            addblock: false
-        });
-    }
-
-    add(element) {
-        this.main.add(element);
-    }
-
-    /*
-     * use a new package (required header!)
-     */
-    use(pkgName,requiredVars) {
-        if(typeof(pkgName) !== 'string') {
-            throw new TypeError('Invalid package type');
-        }
-        pkgName = pkgName.split('.').join('::');
-        if(requiredVars == undefined) {
-            this.filecode += `use ${pkgName};\n`;
-        }
-        else {
-            this.filecode += `use ${pkgName} qw(${requiredVars.join(' ')});\n`;
-        }
-    }
-
-    /*
-     * Write file to string location
-     */
-    write(location) {
-        this.filecode+=this.main.toString();
-        if(this.isModule) {
-            this.filecode += '1;';
-        }
-        console.log(this.filecode);
-    }
-
-}
-
-/*
- * Print method!
- */
-class Print {
-
-    constructor(message,newLine) {
-        if(message == undefined) {
-            message = '';
-        }
-        else if(message instanceof Primitive) {
-            message = `\$${message.name}->valueOf()`;
-        }
-        const sep = newLine === true ? '\\n' : '';
-        this.value = `print("${message}${sep}");\n`;
-    }
-
-    toString() {
-        return this.value;
-    }
-
-}
-
-/*
  * Expr block code (represent a { expr }).
  */
 class Expr extends events {
@@ -158,6 +71,96 @@ class Expr extends events {
             finalStr+=this.tabSpace+this.elements[i];
         }
         return this.addblock === true ? `{\n${finalStr}${this.rootExpr.tabSpace}};\n` : finalStr;
+    }
+
+}
+
+/*
+ * File class (that represent a entire perl file!)
+ */ 
+const FileDefaultDepencies = new Set([
+    'strict',
+    'warnings',
+    'stdlib.array',
+    'stdlib.hashmap',
+    'stdlib.integer',
+    'stdlib.string',
+    'stdlib.boolean'
+]);
+
+class File extends Expr {
+
+    constructor({name,isModule = false}) {
+        super({
+            tabSize: 0,
+            addblock: false
+        });
+        if(typeof (name) !== 'string') {
+            throw new TypeError('Invalid name type!');
+        }
+        this.name = name;
+        this.isModule = isModule;
+        FileDefaultDepencies.forEach( DepName => {
+            this.add(new Dependency(DepName));
+        });
+    }
+
+    /*
+     * Write file to string location
+     */
+    write(location) {
+        const filecode = super.toString();
+        if(this.isModule) {
+            filecode += '1;';
+        }
+        console.log(filecode);
+    }
+
+}
+
+/*
+ * Dependency class!
+ */
+class Dependency {
+
+    constructor(pkgName,requiredVars) {
+        if(typeof(pkgName) !== 'string') {
+            throw new TypeError('Invalid package type');
+        }
+        pkgName = pkgName.split('.').join('::');
+        const ret = "undefined" === typeof(requiredVars);
+        if(ret === false) {
+            if(requiredVars instanceof Array === false) {
+                requiredVars = Array.from(requiredVars);
+            }
+        }
+        this.value = ret === true ? `use ${pkgName};\n` : `use ${pkgName} qw(${requiredVars.join(' ')});\n`;
+    }
+
+    toString() {
+        return this.value;
+    }
+
+}
+
+/*
+ * Print method!
+ */
+class Print {
+
+    constructor(message,newLine) {
+        if(message == undefined) {
+            message = '';
+        }
+        else if(message instanceof Primitive) {
+            message = `\$${message.name}->valueOf()`;
+        }
+        const sep = newLine === true ? '\\n' : '';
+        this.value = `print("${message}${sep}");\n`;
+    }
+
+    toString() {
+        return this.value;
     }
 
 }
@@ -469,6 +472,7 @@ class SEABoolean extends Primitive {
 // Export every schema class!
 module.exports = {
     File,
+    Dependency,
     Expr,
     Routine,
     Condition,
