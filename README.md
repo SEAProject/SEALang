@@ -3,7 +3,7 @@ SEALang is a super set of Perl5 with static typing. The transpiler is powered by
 
 # Example of SEALang
 
-```
+```js
 import (Method_A, Method_B) from lib.pkg; 
 
 sub echo(Scalar k,Scalar v) {
