@@ -151,6 +151,7 @@ class File extends Expr {
             this.add(new Dependency(DepName));
         });
         this.headerDone = true;
+        this.process = new Process();
     }
 
     /*
@@ -214,10 +215,24 @@ class Print {
 }
 
 /*
+ * Process class
+ */
+class Process extends events {
+
+    constructor() {
+        super();
+    }
+
+    exit(code = 0) {
+        this.emit('exit',code);
+    }
+
+}
+
+/*
  * Routine elements
  * (Shiting,ReturnStatment and Routine)
  */
-
 class Routine extends Expr {
 
     constructor({name,args = [],shifting = false}) {
@@ -340,6 +355,39 @@ class While extends Expr {
 
     constructor(SEAElement) {
         super();
+    }
+
+}
+
+/*
+ * Evaluation (try/catch)
+ */
+class Evaluation extends Expr {
+
+    constructor() {
+        super();
+    }
+}
+
+/*
+ * SIG Event handler
+ */
+const IAvailableSIG = new Set([
+    'CHLD',
+    'DIE',
+    'INT',
+    'ALRM',
+    'HUP'
+]);
+
+class SIG {
+
+    constructor(code,routine) {
+
+    }
+
+    toString() {
+
     }
 
 }

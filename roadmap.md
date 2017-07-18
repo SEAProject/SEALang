@@ -8,5 +8,6 @@
 - [x] Work on array primitive prototype.
 - Work on Perl Hash fallback.
 - Work on a SIG implementation with Routine Object!
+- Implement argv!
 - Implement exit method!
 - Implement evaluation.
