@@ -1,12 +1,13 @@
 const {
     File,
     Routine,
+    ReturnStatment,
     Expr,
     Condition,
     While,
-    SEAString,
-    SEAInteger,
-    SEABoolean,
+    Str,
+    Int,
+    Bool,
     Primitive,
     Print
 } = require('./schema/core.js');
@@ -23,8 +24,8 @@ const SubTest   = new Routine({
     args: ['aArg'],
     shifting: true
 });
-const helloVar  = new SEAString('hello',' hello world! ');
-const secondVar = new SEAString('secondVar','hello world!');
+const helloVar  = new Str('hello',' hello world! ');
+const secondVar = new Str('secondVar','hello world!');
 
 SubTest.add(Primitive.constructorOf(helloVar));
 SubTest.add(Primitive.constructorOf(secondVar));
@@ -34,6 +35,7 @@ const ifEqual = new Condition('if',Primitive.methodOf(helloVar,'isEqual',[second
 ifEqual.setRoot(SubTest);
 ifEqual.add(new Print(helloVar,true)); 
 SubTest.add(ifEqual);
+SubTest.add(new ReturnStatment(helloVar));
 
 perlCode.add(SubTest);
 

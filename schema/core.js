@@ -12,6 +12,7 @@ class Expr extends events {
     constructor({ tabSize = IDefaultConfiguration.tabSize, addblock = true } = {}) {
         super();
         this.tabSpace = tabSize === 0 ? '' : ' '.repeat(tabSize);
+        this.closed = false;
         this.addblock = addblock;
         this.rootExpr = undefined;
         this.headerDone = false;
@@ -44,7 +45,10 @@ class Expr extends events {
     }
 
     add(element) {
-        this.emit('add',element);
+        if(this.closed === true) {
+            throw new Error('Expr closed... Impossible to add new element!');
+        }
+
         if(element == undefined) return;
         if(element === this) return;
 
@@ -68,6 +72,17 @@ class Expr extends events {
             }
             else {
                 throw new Error('Cannot add new depencies on non-root Expr');
+            }
+        }
+
+        if(element instanceof ReturnStatment) {
+            if(this instanceof Routine) {
+                this.elements.push(element.toString());
+                this.closed = true;
+                this.returnStatment = true;
+                this.returnMultiple = element.returnMultiple;
+                this.returnType = element.returnedType;
+                return;
             }
         }
 
@@ -253,8 +268,38 @@ class RoutineShifting {
 
 class ReturnStatment {
 
-    constructor() {
+    constructor(expr) {
+        if(expr instanceof Array) {
+            this.returnMultiple = true;
+            this.returnedType = [];
+            const elems = [];
+            expr.forEach( (subExpr,index) => {
+                if(subExpr instanceof Primitive) {
+                    this.returnedType[index] = expr.libtype;
+                    elems.push(`\$${subExpr.name}`);
+                }
+                else {
+                    this.returnedType[index] = 'any';
+                    elems.push(`${subExpr}`);
+                }
+            });
+            this.value = `return (${elems.join(',')});\n`;
+        }
+        else {
+            this.returnMultiple = false;
+            if(expr instanceof Primitive) {
+                this.returnedType = expr.libtype;
+                this.value = `return \$${expr.name};\n`;
+            }
+            else {
+                this.returnedType = 'any'; 
+                this.value = `return ${expr};\n`;
+            }
+        }
+    }
 
+    toString() {
+        return this.value;
     }
 
 }
@@ -412,7 +457,7 @@ class Primitive {
         if(SEAElement instanceof Primitive === false) {
             throw new TypeError('Not a primitive type!');
         }
-        if(SEAElement instanceof SEAString) {
+        if(SEAElement instanceof Str) {
             return `my \$${SEAElement.name} = ${SEAElement.type}->new("${SEAElement.constructValue}");\n`;
         }
         else {
@@ -458,11 +503,11 @@ class Primitive {
 /*
  * String type!
  */
-class SEAString extends Primitive {
+class Str extends Primitive {
 
     constructor(varName,valueOf) {
         if(varName == undefined || typeof(valueOf) !== 'string') {
-            throw new Error('Invalid SEAString');
+            throw new Error('Invalid String');
         }
         super({
             type: 'string',
@@ -476,11 +521,11 @@ class SEAString extends Primitive {
 /*
  * Integer type!
  */
-class SEAInteger extends Primitive {
+class Int extends Primitive {
 
     constructor(varName,valueOf) {
         if(varName == undefined || typeof(valueOf) !== 'number') {
-            throw new Error('Invalid SEAInteger');
+            throw new Error('Invalid Integer');
         }
         super({
             type: 'integer',
@@ -494,14 +539,29 @@ class SEAInteger extends Primitive {
 /*
  * Boolean type!
  */
-class SEABoolean extends Primitive {
+class Bool extends Primitive {
 
     constructor(varName,valueOf) {
         if(varName == undefined || typeof(valueOf) !== 'boolean') {
-            throw new Error('Invalid SEABoolean');
+            throw new Error('Invalid Boolean');
         }
         super({
             type: 'boolean',
+            name: varName,
+            value: valueOf ? 1 : 0,
+        });
+    }
+
+}
+
+/*
+ * Array type!
+ */
+class Arr extends Primitive {
+
+    constructor(varName,valueOf) {
+        super({
+            type: 'array',
             name: varName,
             value: valueOf ? 1 : 0,
         });
@@ -515,11 +575,13 @@ module.exports = {
     Dependency,
     Expr,
     Routine,
+    ReturnStatment,
     Condition,
     While,
-    SEAString,
-    SEAInteger,
-    SEABoolean,
+    Str,
+    Int,
+    Bool,
+    Arr,
     Primitive,
     Print
 }
