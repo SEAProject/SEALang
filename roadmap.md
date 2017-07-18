@@ -3,6 +3,8 @@
 - Routine arguments with shift.
 - Routine return statment support. 
 - Work on while prototype. 
+- Work on map primitive prototype.
 - Work on array primitive prototype.
 - Work on a SIG implementation with Routine Object!
 - Implement exit method!
+- Implement evaluation.

@@ -6,9 +6,9 @@ SEALang is a language created to be transpiled into Perl5. SEALang bring a cool 
 ```js
 import (Method_A, Method_B) from lib.pkg
 
-sub echo(Scalar k,Scalar v) {
+sub echo(Scalar k,Scalar v) 
     print("key => $k, value => $v")
-}
+end
 
 Array<Scalar> arr = (5,10,15)
 # Or tell to the linter the type of the values in the array
@@ -19,9 +19,9 @@ String hello = 'hello world'
 println[hello][typeof(hello) eq String]
 
 Boolean test = true
-if test {
+if test 
     // true
-}
+end
 
 Map<Integer> _t
 _t->a = 5
@@ -80,20 +80,20 @@ export (customMethod)
 
 static String myVar = "hello world"
 
-sub customMethod(Scalar A) {
+sub customMethod(Scalar A) 
     println(A)
-}
+end
 
-class User {
+class User 
 
-    new(String name,Integer self.age) {
+    new(String name,Integer self.age) 
         println(test.myVar)
         self.name = name
-    }
+    end
 
-    sayHello() {
+    sayHello() 
         println("hello ${self.name} with age ${self.age}");
-    }
+    end
 
-}
+end
 ```
