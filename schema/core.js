@@ -565,12 +565,30 @@ class Bool extends Primitive {
  */
 class Arr extends Primitive {
 
-    constructor(varName,valueOf) {
+    constructor(varName,valueOf = []) {
         if("undefined" === typeof(varName) || valueOf instanceof Array === false) {
             throw new Error('Invalid Array');
         }
         super({
             type: 'array',
+            name: varName,
+            value: valueOf,
+        });
+    }
+
+}
+
+/*
+ * Hashmap type!
+ */
+class HashMap extends Primitive {
+
+    constructor(varName,valueOf = {}) {
+        if("undefined" === typeof(varName) || valueOf instanceof Object === false) {
+            throw new Error('Invalid HashMap');
+        }
+        super({
+            type: 'map',
             name: varName,
             value: valueOf,
         });
@@ -591,6 +609,7 @@ module.exports = {
     Int,
     Bool,
     Arr,
+    HashMap,
     Primitive,
     Print
 }
