@@ -14,6 +14,7 @@ class Expr extends events {
         this.tabSpace = tabSize === 0 ? '' : ' '.repeat(tabSize);
         this.addblock = addblock;
         this.rootExpr = undefined;
+        this.headerDone = false;
         this.childrensExpr = [];
         this.elements = [];
         this.scope = {
@@ -30,6 +31,14 @@ class Expr extends events {
         this.tabSpace = root.tabSpace.length === 0 ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace+' '.repeat(IDefaultConfiguration.tabSize);
     }
 
+    setPackage(packageName) {
+        if(this.isModule === false) {
+            throw new Error('Cannot set package on non-module file!');
+        }
+        packageName = packageName.split('.').join('::');
+        this.elements.push(`package ${packageName};\n`)
+    }
+
     breakline() {
         this.elements.push('\n');
     }
@@ -39,8 +48,31 @@ class Expr extends events {
         if(element == undefined) return;
         if(element === this) return;
 
-        if(element instanceof Expr && "undefined" === typeof(element.rootExpr)) {
-            //element.setRoot(this);
+        if(element instanceof Array) {
+            for(let i = 0,len = element.length;i<len;i++) {
+                this.add(element[i]);
+            }
+            return;
+        }
+
+        const rootDefined = "undefined" === typeof(element.rootExpr);
+        if(element instanceof Dependency) {
+            if(rootDefined) {
+                if(this.headerDone === true) {
+                    this.elements.unshift(element.toString());
+                }
+                else {
+                    this.elements.push(element.toString());
+                }
+                return;
+            }
+            else {
+                throw new Error('Cannot add new depencies on non-root Expr');
+            }
+        }
+
+        if(element instanceof Expr && rootDefined === true) {
+            element.setRoot(this);
         }
 
         if(element instanceof Primitive) {
@@ -51,7 +83,7 @@ class Expr extends events {
             this.scope.routines.set(element.name,element);
         }
 
-        this.elements.push(element.toString(this.tabSpace));
+        this.elements.push(element.toString());
     }
     
     hasVar(varName) {
@@ -103,6 +135,7 @@ class File extends Expr {
         FileDefaultDepencies.forEach( DepName => {
             this.add(new Dependency(DepName));
         });
+        this.headerDone = true;
     }
 
     /*
