@@ -139,7 +139,7 @@ class Expr extends events {
     }
 
     get tab() {
-        return this.tabSpace;
+        return "undefined" === typeof(this.rootExpr) ? this.tabSpace : this.rootExpr.tabSpace;
     }
 
     toString() {
@@ -148,8 +148,7 @@ class Expr extends events {
         for(let i = 0,len = this.elements.length;i<len;i++) {
             finalStr+=this.tab+this.elements[i];
         }
-        const localTab = "undefined" === typeof(this.rootExpr) ? this.tab : this.rootExpr.tabSpace;
-        return this.addblock === true ? `{\n${finalStr}${localTab}};\n` : finalStr;
+        return this.addblock === true ? `{\n${finalStr}${this.tab}};\n` : finalStr;
     }
 
 }
@@ -263,6 +262,7 @@ class Routine extends Expr {
         super({});
         this.anonymous = "undefined" === typeof(name);
         this.name = this.anonymous === true ? '' : name;
+        this.routineName = this.anonymous === true ? 'anonymous' : name;
         const charCode = this.name.slice(-1).charCodeAt(0);
         if(Number.isNaN(charCode) === false && charCode !== SpaceChar) {
             this.name+=' ';
@@ -389,7 +389,8 @@ class While extends Expr {
 
         }
         else if(SEAElement instanceof Arr) {
-
+            this.add(new Int('i',0));
+            this.add(new Int('len',SEAElement));
         }
         else {
             throw new Error('Unsupported type for While block!');
@@ -397,7 +398,7 @@ class While extends Expr {
     }
 
     toString() {
-        return '{\nmy $i = 0; };\n';
+        return super.toString();
     }
 
 }
@@ -410,6 +411,7 @@ class Evaluation extends Expr {
     constructor() {
         super();
     }
+
 }
 
 /*
@@ -447,15 +449,7 @@ class SIG {
     PRIMITIVES TYPES
 
 */
-const IPrimeLibrairies = new Map([
-    ['string','stdlib::string'],
-    ['integer','stdlib::integer'],
-    ['boolean','stdlib::boolean'],
-    ['array','stdlib::array'],
-    ['map','stdlib::hashmap'],
-    ['regexp','stdlib::regexp']
-]); 
-
+const IPrimeLibrairies = new Map();
 const IPrimeMethods = new Map();
 
 // String methods
@@ -524,6 +518,7 @@ IPrimeMethods.set('stdlib::array',new Set([
 // Map methods
 IPrimeMethods.set('stdlib::hashmap',new Set([
     'freeze',
+    'clone',
     'clear',
     'size',
     'has',
@@ -541,31 +536,86 @@ IPrimeMethods.set('stdlib::regexp',new Set([
     'test'
 ]));
 
+/*
+ * Primitive type class!
+ */
 class Primitive {
 
-    constructor({type,name,value = 'undef'}) {
+    constructor({type,name,template,value = 'undef'}) {
+        if("undefined" === typeof(name)) {
+            name = 'anonymous';
+        }
         if(IPrimeLibrairies.has(type) === false) {
             throw new Error(`Primitive type ${type} doesn't exist!`);
         }
         this.libtype = IPrimeLibrairies.get(type);
+        if(value instanceof Routine) {
+            if(value.returnStatment === false) {
+                throw new Error(`Cannot assign undefined value from ${value.routineName} to variable ${type}.${name}`);
+            }
+            if(type !== 'array' && value.returnMultiple === true) {
+                throw new Error(`Cannot assign multiple values from ${value.routineName} to variable ${type}.${name}`);
+            }
+            if(type === 'array') {
+                // Implement array type check!
+            }
+            else {
+                if(value.returnType !== this.libtype.std) {
+                    throw new Error(`Invalid returned type from ${value.routineName}!`);
+                }
+            }
+        }
+        if(type === 'array' || type === 'map') {
+            this.template = "undefined" === typeof(template) ? 'scalar' : template;
+        }
         this.name = name;
         this.constructValue = value;
         this.value = value;
     }
 
     get type() {
-        return this.libtype;
+        return this.libtype.std;
     }
 
-    static constructorOf(SEAElement) {
+    static constructorOf(SEAElement,inline = false) {
         if(SEAElement instanceof Primitive === false) {
-            throw new TypeError('Not a primitive type!');
+            throw new TypeError('SEAElement Instanceof primitive is false!');
         }
-        if(SEAElement instanceof Str) {
-            return `my \$${SEAElement.name} = ${SEAElement.type}->new("${SEAElement.constructValue}");\n`;
+        const rC = inline === true ? '' : ';\n';
+        if(SEAElement.constructValue instanceof Primitive) {
+            if(SEAElement.constructValue instanceof Arr || SEAElement.constructValue instanceof HashMap) {
+                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.name}->clone()${rC}`;
+            }
+            else {
+                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.name}->valueOf()${rC}`;
+            }
+        }
+        else if(SEAElement.constructValue instanceof Routine) {
+            if(SEAElement.constructValue.routineName === 'anonymous') {
+                return `my \$${SEAElement.name} = ${SEAElement.constructValue.toString()}`;
+            }
+            else {
+                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.routineName}()`;
+            }
         }
         else {
-            return `my \$${SEAElement.name} = ${SEAElement.type}->new(${SEAElement.constructValue});\n`;
+            let assignHead = ''; 
+            if(SEAElement.name !== 'anonymous') {
+                assignHead = `my \$${SEAElement.name} = `;
+            }
+            if(SEAElement instanceof Str) {
+                return `${assignHead}${SEAElement.type}->new("${SEAElement.constructValue}")${rC}`;
+            }
+            else if(SEAElement instanceof Arr && SEAElement.template !== 'scalar') {
+                const primeRef = IPrimeLibrairies.get(SEAElement.template).schema;
+                SEAElement.constructValue = SEAElement.constructValue.map( val => {
+                    return Primitive.constructorOf(new primeRef(void 0,val),true); 
+                });
+                return `${assignHead}${SEAElement.type}->new(${SEAElement.constructValue})${rC}`;
+            }
+            else {
+                return `${assignHead}${SEAElement.type}->new(${SEAElement.constructValue})${rC}`;
+            }
         }
     }
 
@@ -610,9 +660,6 @@ class Primitive {
 class Str extends Primitive {
 
     constructor(varName,valueOf) {
-        if("undefined" === typeof(varName) || typeof(valueOf) !== 'string') {
-            throw new Error('Invalid String');
-        }
         super({
             type: 'string',
             name: varName,
@@ -628,9 +675,6 @@ class Str extends Primitive {
 class Int extends Primitive {
 
     constructor(varName,valueOf) {
-        if("undefined" === typeof(varName) || typeof(valueOf) !== 'number') {
-            throw new Error('Invalid Integer');
-        }
         super({
             type: 'integer',
             name: varName,
@@ -646,9 +690,6 @@ class Int extends Primitive {
 class Bool extends Primitive {
 
     constructor(varName,valueOf) {
-        if("undefined" === typeof(varName) || typeof(valueOf) !== 'boolean') {
-            throw new Error('Invalid Boolean');
-        }
         super({
             type: 'boolean',
             name: varName,
@@ -663,14 +704,12 @@ class Bool extends Primitive {
  */
 class Arr extends Primitive {
 
-    constructor(varName,valueOf = []) {
-        if("undefined" === typeof(varName) || valueOf instanceof Array === false) {
-            throw new Error('Invalid Array');
-        }
+    constructor(name,template,value = []) {
         super({
             type: 'array',
-            name: varName,
-            value: valueOf,
+            name,
+            template,
+            value
         });
     }
 
@@ -681,18 +720,54 @@ class Arr extends Primitive {
  */
 class HashMap extends Primitive {
 
-    constructor(varName,valueOf = {}) {
-        if("undefined" === typeof(varName) || valueOf instanceof Object === false) {
-            throw new Error('Invalid HashMap');
-        }
+    constructor(name,template,value = {}) {
         super({
             type: 'map',
-            name: varName,
-            value: valueOf,
+            name,
+            template,
+            value
         });
     }
 
 }
+
+/*
+ * Classical Perl Hash type
+ */
+class Hash {
+
+    constructor() {
+
+    }
+    
+}
+
+// Define prime scheme
+IPrimeLibrairies.set('string',{
+    std: 'stdlib::string',
+    schema: Str
+});
+
+IPrimeLibrairies.set('integer',{
+    std: 'stdlib::integer',
+    schema: Int
+});
+
+IPrimeLibrairies.set('boolean',{
+    std: 'stdlib::boolean',
+    schema: Bool
+});
+
+IPrimeLibrairies.set('array',{
+    std: 'stdlib::array',
+    schema: Arr
+});
+
+IPrimeLibrairies.set('map',{
+    std: 'stdlib::hashmap',
+    schema: HashMap
+});
+
 
 // Export every schema class!
 module.exports = {

@@ -2,14 +2,14 @@
 
 - [x] Routine arguments with shift.
 - [x] Routine return statment support. 
-- Add variables and routines scope seeker.
-- Work on foreach prototype (Support both HashMap and Array Primitive).
 - [x] Work on map primitive prototype.
 - [x] Work on array primitive prototype.
+- [x] Work on a SIG implementation with Routine Object!
+- [x] Implement exit method!
+- Add variables and routines scope seeker.
+- Work on foreach prototype (Support both HashMap and Array Primitive).
 - Work on Perl Hash fallback.
-- Work on a SIG implementation with Routine Object!
 - Implement argv!
-- Implement exit method!
 - Implement dump method!
 - Implement evaluation.
 

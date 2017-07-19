@@ -20,35 +20,12 @@ const perlCode = new File({
     isModule: false
 });
 
-// Routine test!
 perlCode.breakline();
-const SubTest   = new Routine({
-    name: 'test',
-    args: ['aArg']
-});
-const helloVar  = new Str('hello',' hello world! ');
-const secondVar = new Str('secondVar','hello world!');
-
-SubTest.add(helloVar);
-SubTest.add(secondVar);
-SubTest.add(Primitive.methodOf(helloVar,'trim'));
-
-const ifEqual = new Condition('if',Primitive.methodOf(helloVar,'isEqual',[secondVar]));
-ifEqual.setRoot(SubTest);
-ifEqual.add(new Print(helloVar,true)); 
-SubTest.add(ifEqual);
-SubTest.add(new ReturnStatment(helloVar));
-perlCode.add(SubTest);
-
-perlCode.breakline();
-const SubDie = new Routine({
-    args: 'err'
-});
-const SigDie = new SIG('DIE',SubDie);
-perlCode.add(SigDie);
-
-perlCode.breakline();
-const tArr = new Arr('tArr',[1,10,15]);
+const tArr = new Arr('tArr','string',[1,10,15]);
+// <T> (scalar,integer,string,boolean)
 perlCode.add(tArr);
+// const Wh = new While(tArr);
+// Wh.setRoot(perlCode);
+// perlCode.add(Wh); 
 
 perlCode.write();
