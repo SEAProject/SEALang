@@ -1,7 +1,7 @@
 const events = require('events');
 
 const IDefaultConfiguration = {
-    tabSize: 4
+    tabSize: 2
 }
 
 /*
@@ -115,17 +115,21 @@ class Expr extends events {
         /*
          * Register variables and routines for seeker mechanism.
          */
-        let PrimeConstructor;
         if(element instanceof Primitive) {
             this.scope.variables.set(element.name,element);
-            PrimeConstructor = Primitive.constructorOf(element);
+            this.elements.push( Primitive.constructorOf(element) );
+            return;
         }
         if(element instanceof Routine) {
             this.scope.routines.set(element.name,element);
         }
 
+        if(element instanceof Print || element instanceof RoutineShifting) {
+            element = element.toString();
+        }
+
         // Final push!
-        this.elements.push( "undefined" === typeof(PrimeConstructor) ? element.toString() : PrimeConstructor);
+        this.elements.push( element );
     }
     
     hasVar(varName) {
@@ -138,17 +142,27 @@ class Expr extends events {
         return this.scope.routines.has(routineName);
     }
 
-    get tab() {
-        return "undefined" === typeof(this.rootExpr) ? this.tabSpace : this.rootExpr.tabSpace;
+    get rootTab() {
+        if("undefined" === typeof(this.rootExpr)) {
+            return this.tabSpace;
+        }
+        return this.rootExpr.tabSpace.length === 0 ? '' : this.rootExpr.tabSpace;
     }
 
     toString() {
         if(this.elements.length === 0) return '';
         let finalStr = '';
         for(let i = 0,len = this.elements.length;i<len;i++) {
-            finalStr+=this.tab+this.elements[i];
+            const element = this.elements[i];
+            if(typeof(element) === 'string') {
+                finalStr+=this.tabSpace+element;
+            }
+            else {
+                finalStr+=element.toString();
+            }
         }
-        return this.addblock === true ? `{\n${finalStr}${this.tab}};\n` : finalStr;
+        const tabBlock = "undefined" === typeof(this.rootExpr) ? '' : this.rootExpr.tabSpace;
+        return this.addblock === true ? `{\n${finalStr}${tabBlock}};\n` : finalStr;
     }
 
 }
@@ -258,7 +272,7 @@ const Process = {
 const SpaceChar = ' '.charCodeAt(0);
 class Routine extends Expr {
 
-    constructor({name,args = [],shifting = false}) {
+    constructor({name,args = [],shifting = false} = {}) {
         super({});
         this.anonymous = "undefined" === typeof(name);
         this.name = this.anonymous === true ? '' : name;
@@ -274,7 +288,7 @@ class Routine extends Expr {
     }
 
     toString() {
-        return `sub ${this.name}`+super.toString();
+        return `${this.rootTab}sub ${this.name}`+super.toString();
     }
 
 }
@@ -326,7 +340,7 @@ class ReturnStatment {
             const elems = [];
             expr.forEach( (subExpr,index) => {
                 if(subExpr instanceof Primitive) {
-                    this.returnedType[index] = expr.libtype;
+                    this.returnedType[index] = expr.libtype.std;
                     elems.push(`\$${subExpr.name}`);
                 }
                 else {
@@ -339,8 +353,8 @@ class ReturnStatment {
         else {
             this.returnMultiple = false;
             if(expr instanceof Primitive) {
-                this.returnedType = expr.libtype;
-                this.value = `return \$${expr.name};\n`;
+                this.returnedType = expr.libtype.std;
+                this.value = expr.name === 'anonymous' ? `return ${Primitive.constructorOf(expr)}` : `return \$${expr.name};\n`;
             }
             else {
                 this.returnedType = 'any'; 
@@ -373,7 +387,7 @@ class Condition extends Expr {
     }
 
     toString() {
-        return `${this.cond} (${this.expr}) `+super.toString();
+        return `${this.rootTab}${this.cond} (${this.expr}) `+super.toString();
     }
 
 }
@@ -595,7 +609,7 @@ class Primitive {
                 return `my \$${SEAElement.name} = ${SEAElement.constructValue.toString()}`;
             }
             else {
-                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.routineName}()`;
+                return `my \$${SEAElement.name} = ${SEAElement.constructValue.routineName}()${rC}`;
             }
         }
         else {
