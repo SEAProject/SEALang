@@ -21,12 +21,22 @@ const perlCode = new File({
 });
 
 perlCode.breakline();
-const tArr = new Arr('tArr',void 0,[1,10,15]);
-// <T> (scalar,integer,string,boolean)
+const testRoutine = new Routine({
+    name: 'getHello'
+});
+testRoutine.add(
+    new ReturnStatment(new Str(void 0,'hello world!'))
+);
+perlCode.add(testRoutine);
+
+perlCode.breakline();
+const tArr = new Arr('tArr','integer',[1,0]);
 perlCode.add(tArr);
-const Wh = new While(tArr);
-Wh._inner.setRoot(perlCode);
-Wh.add(new Str('test','hello world'));
-perlCode.add(Wh); 
+const customWhile = new While(tArr);
+const testStr = new Str('test',testRoutine);
+customWhile.add(testStr);
+customWhile.add(new Print(testStr,true));
+customWhile.add(new Print('$element',true));
+perlCode.add(customWhile); 
 
 perlCode.write();

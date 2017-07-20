@@ -8,7 +8,7 @@
 - [x] Implement exit method!
 - Add variables and routines scope seeker.
 - Work on foreach prototype (Support both HashMap and Array Primitive).
-- Work on Perl Hash fallback.
+- Work on Hash & Scalar Primitive!
 - Implement argv!
 - Implement dump method!
 - Implement evaluation.

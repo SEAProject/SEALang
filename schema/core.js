@@ -104,7 +104,12 @@ class Expr extends events {
         /*
          * When the element is a another Expr with no root defined.
          */
-        if(element instanceof Expr && rootDefined === true) {
+        if(element instanceof While) {
+            if(element._inner instanceof Expr && rootDefined === true) {
+                element._inner.setRoot(this);
+            }
+        }
+        else if(element instanceof Expr && rootDefined === true) {
             element.setRoot(this);
         }
 
@@ -415,6 +420,8 @@ class While extends Expr {
             this.incre = new Int('i',0);
             this._inner.add(this.incre);
             this._inner.add(new Int('len',SEAElement.size()));
+            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema
+            this.add(new PrimeRef('element',SEAElement.get(this.incre)));
         }
         else {
             throw new Error('Unsupported type for While block!');
@@ -605,18 +612,24 @@ class Primitive {
         return this.libtype.std;
     }
 
+    static valueOf(SEAElement,assign = false,inline = false) {
+        const rC = inline === true ? '' : ';\n';
+        const assignV = assign === true ? `my \$${SEAElement.name} = ` : '';
+        if(SEAElement instanceof Arr || SEAElement instanceof HashMap) {
+            return `${assignV}\$${SEAElement.name}->clone()${rC}`;
+        }
+        else {
+            return `${assignV}\$${SEAElement.name}->valueOf()${rC}`;
+        }
+    }
+
     static constructorOf(SEAElement,inline = false) {
         if(SEAElement instanceof Primitive === false) {
             throw new TypeError('SEAElement Instanceof primitive is false!');
         }
         const rC = inline === true ? '' : ';\n';
         if(SEAElement.constructValue instanceof Primitive) {
-            if(SEAElement.constructValue instanceof Arr || SEAElement.constructValue instanceof HashMap) {
-                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.name}->clone()${rC}`;
-            }
-            else {
-                return `my \$${SEAElement.name} = \$${SEAElement.constructValue.name}->valueOf()${rC}`;
-            }
+            return Primitive.valueOf(SEAElement.constructValue,true,inline);
         }
         else if(SEAElement.constructValue instanceof Routine) {
             if(SEAElement.constructValue.routineName === 'anonymous') {
@@ -692,9 +705,10 @@ class PrimeMethod {
 
     constructor({name,element,args = []}) {
         this.name = name;
-        this.args = args;
-        console.log(args);
         this.element = element;
+        this.args = args.map( val => {
+            return val instanceof Primitive ? Primitive.valueOf(val,false,true) : val;
+        });
     }
 
     toString() {
@@ -770,6 +784,14 @@ class Arr extends Primitive {
         });
     }
 
+    get(index) {
+        return new PrimeMethod({
+            name: 'get',
+            args: [index],
+            element: this
+        });
+    }
+
     size() {
         return new PrimeMethod({
             name: 'size',
@@ -798,12 +820,25 @@ class HashMap extends Primitive {
 /*
  * Classical Perl Hash type
  */
-class Hash {
+class Hash extends Primitive {
 
     constructor() {
 
     }
     
+}
+
+/*
+ * Classical Scalar type!
+ */
+class Scalar extends Primitive {
+    constructor(varName,valueOf) {
+        super({
+            type: 'scalar',
+            name: varName,
+            value: valueOf,
+        });
+    }
 }
 
 // Define prime scheme
@@ -831,6 +866,18 @@ IPrimeLibrairies.set('map',{
     std: 'stdlib::hashmap',
     schema: HashMap
 });
+
+IPrimeLibrairies.set('hash',{
+    std: 'hash',
+    schema: Hash
+});
+
+
+IPrimeLibrairies.set('scalar',{
+    std: 'scalar',
+    schema: Scalar
+});
+
 
 
 // Export every schema class!
