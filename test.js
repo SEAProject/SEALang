@@ -20,5 +20,13 @@ const perlCode = new File({
 });
 
 perlCode.breakline();
+const Sub = new Routine({
+    name: 'test'
+});
+Sub.add(new Hash('test',{
+    a: 5,
+    b: 10
+}));
+perlCode.add(Sub);
 
 perlCode.write();

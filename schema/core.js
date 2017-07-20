@@ -662,8 +662,8 @@ class Primitive {
                 throw new Error('Invalid type for scalar type!');
             }
             else if(SEAElement instanceof Hash) {
-                if(typeOf === 'Object') {
-                    return `${assignHead}"${value}"${rC}`;
+                if(typeOf === 'object') {
+                    return `${assignHead}${Hash.ObjectToHash(value)}${rC}`;
                 }
                 throw new Error('Invalid hash type argument!');
             }
@@ -812,6 +812,19 @@ class Hash extends Primitive {
         });
     }
 
+    static ToFormat(hashStr,tabSize = IDefaultConfiguration.tabSize) {
+        const tabSpace = ' '.repeat(tabSize);
+        hashStr = hashStr.replace('{','{\n')
+        .replace(/([a-zA-Z0-9]+\s*\=\>)/g,function(m) {
+            return tabSpace+m;
+        })
+        .replace(/([};]+)/g,function(m) {
+            return `\n${m}`;
+        })
+        .replace(',',',\n');
+        return hashStr;
+    }
+
     static ObjectToHash(object) {
         if(typeof(object) !== 'object') {
             throw new TypeError('Invalid object type!');
@@ -863,7 +876,7 @@ class Hash extends Primitive {
             return ret.slice(0,-1)+'}';
         }
 
-        return parse(object);
+        return Hash.ToFormat(parse(object));
     }
     
 }
