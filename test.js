@@ -3,6 +3,7 @@ const {
     Routine,
     ReturnStatment,
     Scalar,
+    Hash,
     Expr,
     Condition,
     While,
@@ -19,11 +20,5 @@ const perlCode = new File({
 });
 
 perlCode.breakline();
-const Sub = new Routine({name:'test'});
-Sub.add(new ReturnStatment(new Str(void 0,'hello')));
-perlCode.add(Sub);
-
-perlCode.breakline();
-perlCode.add(new Scalar('tR',Sub));
 
 perlCode.write();

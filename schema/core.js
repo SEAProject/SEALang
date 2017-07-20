@@ -812,11 +812,58 @@ class Hash extends Primitive {
         });
     }
 
-    static ObjectToHash(objet) {
-        if(typeof(object) !== 'Object') {
+    static ObjectToHash(object) {
+        if(typeof(object) !== 'object') {
             throw new TypeError('Invalid object type!');
         }
 
+        const parseArray = function(arr) {
+            arr = arr.map( arrV => {
+                const typeOf = typeof(arrV);
+                if(arrV instanceof Array) {
+                    return parseArray(arrV);
+                }
+                else if(typeOf === 'object') {
+                    return parse(arrV);
+                }
+                else if(typeOf === 'string') {
+                    return `"${arrV}"`;
+                }
+                else if(typeOf === 'boolean') {
+                    return `${arrV === true ? 1 : 0}`;
+                }
+                else {
+                    return arrV.toString();
+                }
+            });
+            return `(${arr.join(',')})`;
+        }
+
+        const parse = function(_O) {
+            let ret = '{';
+            for(let k in _O) {
+                const v = _O[k];
+                const typeOf = typeof(v);
+                if(v instanceof Array) {
+                    ret+=`${k} => ${parseArray(v)},`
+                }
+                else if(typeOf === 'object') {
+                    ret+=`${k} => ${parse(v)},`;
+                }
+                else if(typeOf === 'string') {
+                    ret+=`${k} => "${v}",`;
+                }
+                else if(typeOf === 'boolean') {
+                    ret+=`${k} => ${v === true ? 1 : 0},`;
+                }
+                else {
+                    ret+=`${k} => ${v.toString()},`;
+                }
+            }
+            return ret.slice(0,-1)+'}';
+        }
+
+        return parse(object);
     }
     
 }
