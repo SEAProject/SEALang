@@ -6,9 +6,10 @@
 - [x] Work on array primitive prototype.
 - [x] Work on a SIG implementation with Routine Object!
 - [x] Implement exit method!
+- [x] Scalar implementation.
 - Add variables and routines scope seeker.
 - Work on foreach prototype (Support both HashMap and Array Primitive).
-- Work on Hash & Scalar Primitive!
+- Work on Hash Primitive!
 - Implement argv!
 - Implement dump method!
 - Implement evaluation.

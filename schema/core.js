@@ -486,6 +486,7 @@ class SIG {
 */
 const IPrimeLibrairies = new Map();
 const IPrimeMethods = new Map();
+const IPrimeScalarCast = new Set(['stdlib::integer','stdlib::string','stdlib::boolean']);
 
 // String methods
 IPrimeMethods.set('stdlib::string',new Set([
@@ -595,7 +596,11 @@ class Primitive {
                 // Implement array type check!
             }
             else {
-                if(value.returnType !== this.libtype.std) {
+                this.castScalar = false;
+                if(IPrimeScalarCast.has(value.returnType) === true && this.libtype.std === 'scalar') {
+                    this.castScalar = true;
+                }
+                else if(value.returnType !== this.libtype.std) {
                     throw new Error(`Invalid returned type from ${value.routineName}!`);
                 }
             }
@@ -628,19 +633,19 @@ class Primitive {
             throw new TypeError('SEAElement Instanceof primitive is false!');
         }
         const rC = inline === true ? '' : ';\n';
-        if(SEAElement.constructValue instanceof Primitive) {
-            return Primitive.valueOf(SEAElement.constructValue,true,inline);
+        const value     = SEAElement.constructValue;
+        const typeOf    = typeof(value);
+        if(value instanceof Primitive) {
+            return Primitive.valueOf(value,true,inline);
         }
-        else if(SEAElement.constructValue instanceof Routine) {
-            if(SEAElement.constructValue.routineName === 'anonymous') {
-                return `my \$${SEAElement.name} = ${SEAElement.constructValue.toString()}`;
-            }
-            else {
-                return `my \$${SEAElement.name} = ${SEAElement.constructValue.routineName}()${rC}`;
-            }
+        else if(value instanceof Routine) {
+            const castCall = SEAElement.castScalar === true ? '->valueOf()' : '';
+            return value.routineName === 'anonymous' ? 
+            `my \$${SEAElement.name} = ${value.toString()}${castCall}` : 
+            `my \$${SEAElement.name} = ${value.routineName}()${castCall}${rC}`;
         }
-        else if(SEAElement.constructValue instanceof PrimeMethod) {
-            return `my \$${SEAElement.name} = ${SEAElement.constructValue.toString()}`;
+        else if(value instanceof PrimeMethod) {
+            return `my \$${SEAElement.name} = ${value.toString()}`;
         }
         else {
             let assignHead = ''; 
@@ -648,51 +653,28 @@ class Primitive {
                 assignHead = `my \$${SEAElement.name} = `;
             }
             if(SEAElement instanceof Str) {
-                return `${assignHead}${SEAElement.type}->new("${SEAElement.constructValue}")${rC}`;
+                return `${assignHead}${SEAElement.type}->new("${value}")${rC}`;
+            }
+            else if(SEAElement instanceof Scalar) {
+                if(typeOf === 'string' || typeOf === 'number') {
+                    return typeOf === 'string' ? `${assignHead}"${value}"${rC}` : `${assignHead}${value}${rC}`;
+                }
+                throw new Error('Invalid type for scalar type!');
+            }
+            else if(SEAElement instanceof Hash) {
+                if(typeOf === 'Object') {
+                    return `${assignHead}"${value}"${rC}`;
+                }
+                throw new Error('Invalid hash type argument!');
             }
             else if(SEAElement instanceof Arr && SEAElement.template !== 'scalar') {
                 const primeRef = IPrimeLibrairies.get(SEAElement.template).schema;
-                SEAElement.constructValue = SEAElement.constructValue.map( val => {
+                value = value.map( val => {
                     return Primitive.constructorOf(new primeRef(void 0,val),true); 
                 });
-                return `${assignHead}${SEAElement.type}->new(${SEAElement.constructValue})${rC}`;
+                return `${assignHead}${SEAElement.type}->new(${value})${rC}`;
             }
-            else {
-                return `${assignHead}${SEAElement.type}->new(${SEAElement.constructValue})${rC}`;
-            }
-        }
-    }
-
-    static methodOf(SEAElement,methodName,args = []) {
-        if(SEAElement instanceof Primitive === false) {
-            throw new TypeError('Not a primitive type!');
-        }
-        const elementType = SEAElement.type;
-        if(IPrimeMethods.has(elementType) === false) {
-            throw new Error(`Invalid ${elementType} primitive type for element ${SEAElement.name}`);
-        }
-        if(IPrimeMethods.get(elementType).has(methodName) === false) {
-            throw new Error(`${methodName} doesn't exist for ${elementType} primitive!`);
-        }
-        if(args.length === 0) {
-            return `\$${SEAElement.name}->${methodName};\n`;
-        }
-        else {
-            let final = [];
-            args.forEach( element => {
-                if(typeof(element) === 'string') {
-                    final.push(element);
-                }
-                else {
-                    if(element instanceof Primitive) {
-                        final.push(`\$${element.name}`);
-                    }
-                    else if(element instanceof Expr) {
-                        final.push(element.toString());
-                    }
-                }
-            });
-            return `\$${SEAElement.name}->${methodName}(${final.join(',')});\n`;
+            return `${assignHead}${SEAElement.type}->new(${value})${rC}`;
         }
     }
 
@@ -822,7 +804,18 @@ class HashMap extends Primitive {
  */
 class Hash extends Primitive {
 
-    constructor() {
+    constructor(varName,valueOf) {
+        super({
+            type: 'hash',
+            name: varName,
+            value: valueOf,
+        });
+    }
+
+    static ObjectToHash(objet) {
+        if(typeof(object) !== 'Object') {
+            throw new TypeError('Invalid object type!');
+        }
 
     }
     
@@ -896,6 +889,8 @@ module.exports = {
     Bool,
     Arr,
     HashMap,
+    Hash,
+    Scalar,
     Primitive,
     Print
 }
