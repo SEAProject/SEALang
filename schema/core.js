@@ -414,7 +414,12 @@ class While extends Expr {
         this._inner = new Expr();
         this.setRoot(this._inner);
         if(SEAElement instanceof HashMap) {
-
+            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema
+            this.add(new PrimeRef('element',SEAElement.get(this.incre)));
+            this.type = 'map';
+        }
+        else if(SEAElement instanceof Hash) {
+            this.type = 'hash';
         }
         else if(SEAElement instanceof Arr) {
             this.incre = new Int('i',0);
@@ -422,6 +427,7 @@ class While extends Expr {
             this._inner.add(new Int('len',SEAElement.size()));
             const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema
             this.add(new PrimeRef('element',SEAElement.get(this.incre)));
+            this.type = 'array';
         }
         else {
             throw new Error('Unsupported type for While block!');
@@ -429,10 +435,16 @@ class While extends Expr {
     }
 
     toString() {
-        if("undefined" !== typeof(this.incre)) {
+        if(this.type === 'array') {
             this.add(this.incre.add(1));
+            this._inner.add(`while($i < $len) ${super.toString()}`);
         }
-        this._inner.add(`while($i < $len) ${super.toString()}`);
+        else if(this.type === 'map') {
+
+        }
+        else if(this.type === 'hash') {
+
+        }
         return this._inner.toString();
     }
 
@@ -728,6 +740,9 @@ class Int extends Primitive {
     }
 
     add(value) {
+        if("undefined" === typeof(value)) {
+            throw new Error('Undefined value');
+        }
         return new PrimeMethod({
             name: 'add',
             args: [value],
