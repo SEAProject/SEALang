@@ -30,6 +30,7 @@ class Expr extends events {
         }
         this.rootExpr = root;
         this.tabSpace = root.tabSpace.length === 0 ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace+' '.repeat(IDefaultConfiguration.tabSize);
+        return this;
     }
 
     setPackage(packageName) {
@@ -37,11 +38,13 @@ class Expr extends events {
             throw new Error('Cannot set package on non-module file!');
         }
         packageName = packageName.split('.').join('::');
-        this.elements.push(`package ${packageName};\n`)
+        this.elements.push(`package ${packageName};\n`);
+        return this;
     }
 
     breakline() {
         this.elements.push('\n');
+        return this;
     }
 
     add(element) {
@@ -124,12 +127,13 @@ class Expr extends events {
             this.scope.routines.set(element.name,element);
         }
 
-        if(element instanceof Print || element instanceof RoutineShifting) {
+        if(element instanceof Print || element instanceof RoutineShifting || element instanceof PrimeMethod) {
             element = element.toString();
         }
 
         // Final push!
         this.elements.push( element );
+        return this;
     }
     
     hasVar(varName) {
@@ -262,7 +266,10 @@ class Print {
  * Process var
  */
 const Process = {
-    exit: (code = 0) => `exit(${code});\n`
+    exit: (code = 0) => `exit(${code});\n`,
+    argv: () => {
+        return `stdlib::array->new(@ARGV)`;
+    }
 }
 
 /*
@@ -399,12 +406,15 @@ class While extends Expr {
 
     constructor(SEAElement) {
         super();
+        this._inner = new Expr();
+        this.setRoot(this._inner);
         if(SEAElement instanceof HashMap) {
 
         }
         else if(SEAElement instanceof Arr) {
-            this.add(new Int('i',0));
-            this.add(new Int('len',SEAElement));
+            this.incre = new Int('i',0);
+            this._inner.add(this.incre);
+            this._inner.add(new Int('len',SEAElement.size()));
         }
         else {
             throw new Error('Unsupported type for While block!');
@@ -412,7 +422,11 @@ class While extends Expr {
     }
 
     toString() {
-        return super.toString();
+        if("undefined" !== typeof(this.incre)) {
+            this.add(this.incre.add(1));
+        }
+        this._inner.add(`while($i < $len) ${super.toString()}`);
+        return this._inner.toString();
     }
 
 }
@@ -612,6 +626,9 @@ class Primitive {
                 return `my \$${SEAElement.name} = ${SEAElement.constructValue.routineName}()${rC}`;
             }
         }
+        else if(SEAElement.constructValue instanceof PrimeMethod) {
+            return `my \$${SEAElement.name} = ${SEAElement.constructValue.toString()}`;
+        }
         else {
             let assignHead = ''; 
             if(SEAElement.name !== 'anonymous') {
@@ -669,6 +686,24 @@ class Primitive {
 }
 
 /*
+ * Primitive Method
+ */
+class PrimeMethod {
+
+    constructor({name,element,args = []}) {
+        this.name = name;
+        this.args = args;
+        console.log(args);
+        this.element = element;
+    }
+
+    toString() {
+        return `\$${this.element.name}->${this.name}(${this.args.join(',')});\n`;
+    }
+
+}
+
+/*
  * String type!
  */
 class Str extends Primitive {
@@ -693,6 +728,14 @@ class Int extends Primitive {
             type: 'integer',
             name: varName,
             value: valueOf,
+        });
+    }
+
+    add(value) {
+        return new PrimeMethod({
+            name: 'add',
+            args: [value],
+            element: this
         });
     }
 
@@ -724,6 +767,13 @@ class Arr extends Primitive {
             name,
             template,
             value
+        });
+    }
+
+    size() {
+        return new PrimeMethod({
+            name: 'size',
+            element: this
         });
     }
 
