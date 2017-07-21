@@ -4,8 +4,7 @@
   "description": "SEALang is a super set of Perl5 with static typing. The transpiler is powered by Node.JS",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "node scripts/compile.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",

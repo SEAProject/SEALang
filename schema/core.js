@@ -246,38 +246,6 @@ class Dependency {
 }
 
 /*
- * Print method!
- */
-class Print {
-
-    constructor(message,newLine) {
-        if(message == undefined) {
-            message = '';
-        }
-        else if(message instanceof Primitive) {
-            message = `$${message.name}->valueOf()`;
-        }
-        const sep = newLine === true ? '\\n' : '';
-        this.value = `print("${message}${sep}");\n`;
-    }
-
-    toString() {
-        return this.value;
-    }
-
-}
-
-/*
- * Process var
- */
-const Process = {
-    exit: (code = 0) => `exit(${code});\n`,
-    argv: () => {
-        return 'stdlib::array->new(@ARGV)';
-    }
-};
-
-/*
  * Routine elements
  * (Shiting,ReturnStatment and Routine)
  */
@@ -380,6 +348,38 @@ class ReturnStatment {
     }
 
 }
+
+/*
+ * Print method!
+ */
+class Print {
+
+    constructor(message,newLine) {
+        if(message == undefined) {
+            message = '';
+        }
+        else if(message instanceof Primitive) {
+            message = `$${message.name}->valueOf()`;
+        }
+        const sep = newLine === true ? '\\n' : '';
+        this.value = `print("${message}${sep}");\n`;
+    }
+
+    toString() {
+        return this.value;
+    }
+
+}
+
+/*
+ * Process var
+ */
+const Process = {
+    exit: (code = 0) => `exit(${code});\n`,
+    argv: () => {
+        return 'stdlib::array->new(@ARGV)';
+    }
+};
 
 /*
  * Condition block
@@ -497,93 +497,7 @@ class SIG {
 
 */
 const IPrimeLibrairies = new Map();
-const IPrimeMethods = new Map();
 const IPrimeScalarCast = new Set(['stdlib::integer','stdlib::string','stdlib::boolean']);
-
-// String methods
-IPrimeMethods.set('stdlib::string',new Set([
-    'freeze',
-    'isEqual',
-    'slice',
-    'substr',
-    'charAt',
-    'charCodeAt',
-    'match',
-    'concat',
-    'contains',
-    'containsRight',
-    'split',
-    'repeat',
-    'replace',
-    'toLowerCase',
-    'toUpperCase',
-    'trim',
-    'trimLeft',
-    'trimRight'
-]));
-
-// Integer methods
-IPrimeMethods.set('stdlib::integer',new Set([
-    'freeze',
-    'sub',
-    'add',
-    'mul',
-    'div'
-]));
-
-// Boolean methods
-IPrimeMethods.set('stdlib::boolean',new Set([]));
-
-// Array methods
-IPrimeMethods.set('stdlib::array',new Set([
-    'freeze',
-    'clear',
-    'size',
-    'push',
-    'concat',
-    'get',
-    'join',
-    'indexOf',
-    'lastIndexOf',
-    'pop',
-    'shift',
-    'unshift',
-    'reverse',
-    'clone',
-    'slice',
-    'splice',
-    'fill',
-    'find',
-    'findIndex',
-    'reduce',
-    'reduceRight',
-    'some',
-    'map',
-    'every',
-    'forEach'
-]));
-
-// Map methods
-IPrimeMethods.set('stdlib::hashmap',new Set([
-    'freeze',
-    'clone',
-    'clear',
-    'size',
-    'has',
-    'get',
-    'set',
-    'delete',
-    'forEach',
-    'keys',
-    'values'
-]));
-
-// Regex methods
-IPrimeMethods.set('stdlib::regexp',new Set([
-    'exec',
-    'test'
-]));
-
 /*
  * Primitive type class!
  */
@@ -827,7 +741,7 @@ class Hash extends Primitive {
         });
     }
 
-    static ToFormat(hashStr,tabSize = IDefaultConfiguration.tabSize) {
+    static ToFormat(hashStr,tabSize = 2) {
         const tabSpace = ' '.repeat(tabSize);
         hashStr = hashStr.replace('{','{\n')
         .replace(/([a-zA-Z0-9]+\s*=>)/g,function(m) {
@@ -947,7 +861,6 @@ IPrimeLibrairies.set('scalar',{
 });
 
 
-
 // Export every schema class!
 module.exports = {
     File,
@@ -959,13 +872,15 @@ module.exports = {
     Condition,
     SIG,
     While,
+    Print,
+    Primitive,
+    Hash,
+    HashMap,
     Str,
     Int,
     Bool,
     Arr,
-    HashMap,
-    Hash,
     Scalar,
-    Primitive,
-    Print
+    PrimeMethod,
+    Evaluation
 };
