@@ -2,6 +2,10 @@
 
 Schema API writed in JavaScript to generate Perl5 code for SEA Compiler.
 
+# Roadmap (project) 
+
+- Split code in multiple part without circular dependencies!
+
 # Roadmap (Schema API).
 
 - [x] Routine arguments with shift.
