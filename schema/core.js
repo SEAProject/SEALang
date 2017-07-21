@@ -2,7 +2,7 @@ const events = require('events');
 
 const IDefaultConfiguration = {
     tabSize: 2
-}
+};
 
 /*
  * Expr block code (represent a { expr }).
@@ -21,7 +21,7 @@ class Expr extends events {
         this.scope = {
             variables: new Map(),
             routines: new Map()
-        }
+        };
     }
 
     setRoot(root) {
@@ -53,7 +53,7 @@ class Expr extends events {
         }
 
         // When we try to add an undefined value!
-        if("undefined" === typeof(element)) return;
+        if('undefined' === typeof(element)) return;
 
         // When we try to add this to this...
         if(element === this) return;
@@ -71,7 +71,7 @@ class Expr extends events {
         /*
          * When the element is a perl lib.
          */
-        const rootDefined = "undefined" === typeof(element.rootExpr);
+        const rootDefined = 'undefined' === typeof(element.rootExpr);
         if(element instanceof Dependency) {
             if(rootDefined) {
                 if(this.headerDone === true) {
@@ -152,7 +152,7 @@ class Expr extends events {
     }
 
     get rootTab() {
-        if("undefined" === typeof(this.rootExpr)) {
+        if('undefined' === typeof(this.rootExpr)) {
             return this.tabSpace;
         }
         return this.rootExpr.tabSpace.length === 0 ? '' : this.rootExpr.tabSpace;
@@ -170,7 +170,7 @@ class Expr extends events {
                 finalStr+=element.toString();
             }
         }
-        const tabBlock = "undefined" === typeof(this.rootExpr) ? '' : this.rootExpr.tabSpace;
+        const tabBlock = 'undefined' === typeof(this.rootExpr) ? '' : this.rootExpr.tabSpace;
         return this.addblock === true ? `{\n${finalStr}${tabBlock}};\n` : finalStr;
     }
 
@@ -210,8 +210,8 @@ class File extends Expr {
     /*
      * Write file to string location
      */
-    write(location) {
-        const filecode = super.toString();
+    write() {
+        let filecode = super.toString();
         if(this.isModule) {
             filecode += '1;';
         }
@@ -230,7 +230,7 @@ class Dependency {
             throw new TypeError('Invalid package type');
         }
         pkgName = pkgName.split('.').join('::');
-        const ret = "undefined" === typeof(requiredVars);
+        const ret = 'undefined' === typeof(requiredVars);
         if(ret === false) {
             if(requiredVars instanceof Array === false) {
                 requiredVars = Array.from(requiredVars);
@@ -255,7 +255,7 @@ class Print {
             message = '';
         }
         else if(message instanceof Primitive) {
-            message = `\$${message.name}->valueOf()`;
+            message = `$${message.name}->valueOf()`;
         }
         const sep = newLine === true ? '\\n' : '';
         this.value = `print("${message}${sep}");\n`;
@@ -273,9 +273,9 @@ class Print {
 const Process = {
     exit: (code = 0) => `exit(${code});\n`,
     argv: () => {
-        return `stdlib::array->new(@ARGV)`;
+        return 'stdlib::array->new(@ARGV)';
     }
-}
+};
 
 /*
  * Routine elements
@@ -286,7 +286,7 @@ class Routine extends Expr {
 
     constructor({name,args = [],shifting = false} = {}) {
         super({});
-        this.anonymous = "undefined" === typeof(name);
+        this.anonymous = 'undefined' === typeof(name);
         this.name = this.anonymous === true ? '' : name;
         this.routineName = this.anonymous === true ? 'anonymous' : name;
         const charCode = this.name.slice(-1).charCodeAt(0);
@@ -317,19 +317,19 @@ class RoutineShifting {
                 if(shifting) {
                     let finalStr = '';
                     variables.forEach( (element) => {
-                        const elName = element instanceof Primitive ? `\$${element.name}` : '$'+element;
+                        const elName = element instanceof Primitive ? `$${element.name}` : '$'+element;
                         finalStr+='my '+elName+' = shift;\n';
                     });
                     this.value = finalStr;
                 }
                 else {
-                    const finalStr = variables.map( (element) => element instanceof Primitive ? `\$${element.name}` : '$'+element ).join(',');
+                    const finalStr = variables.map( (element) => element instanceof Primitive ? `$${element.name}` : '$'+element ).join(',');
                     this.value = `my (${finalStr}) = @_;\n`;
                 }
             }
         }
         else {
-            const elName = variables instanceof Primitive ? `\$${variables.name}` : '$'+variables;
+            const elName = variables instanceof Primitive ? `$${variables.name}` : '$'+variables;
             this.value = 'my '+elName+' = shift;\n';
         }
     }
@@ -353,7 +353,7 @@ class ReturnStatment {
             expr.forEach( (subExpr,index) => {
                 if(subExpr instanceof Primitive) {
                     this.returnedType[index] = expr.libtype.std;
-                    elems.push(`\$${subExpr.name}`);
+                    elems.push(`$${subExpr.name}`);
                 }
                 else {
                     this.returnedType[index] = 'any';
@@ -366,7 +366,7 @@ class ReturnStatment {
             this.returnMultiple = false;
             if(expr instanceof Primitive) {
                 this.returnedType = expr.libtype.std;
-                this.value = expr.name === 'anonymous' ? `return ${Primitive.constructorOf(expr)}` : `return \$${expr.name};\n`;
+                this.value = expr.name === 'anonymous' ? `return ${Primitive.constructorOf(expr)}` : `return $${expr.name};\n`;
             }
             else {
                 this.returnedType = 'any'; 
@@ -394,7 +394,7 @@ class Condition extends Expr {
             throw new Error('Unknown condition type!');
         }
         this.cond = cond;
-        this.expr = expr instanceof Primitive ? `\$${expr.name}->valueOf() == 1` : expr;
+        this.expr = expr instanceof Primitive ? `$${expr.name}->valueOf() == 1` : expr;
         this.expr = this.expr.replace(';','').replace('\n','');
     }
 
@@ -414,7 +414,7 @@ class While extends Expr {
         this._inner = new Expr();
         this.setRoot(this._inner);
         if(SEAElement instanceof HashMap) {
-            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema
+            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
             this.add(new PrimeRef('element',SEAElement.get(this.incre)));
             this.type = 'map';
         }
@@ -425,7 +425,7 @@ class While extends Expr {
             this.incre = new Int('i',0);
             this._inner.add(this.incre);
             this._inner.add(new Int('len',SEAElement.size()));
-            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema
+            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
             this.add(new PrimeRef('element',SEAElement.get(this.incre)));
             this.type = 'array';
         }
@@ -440,10 +440,10 @@ class While extends Expr {
             this._inner.add(`while($i < $len) ${super.toString()}`);
         }
         else if(this.type === 'map') {
-
+            // ignore
         }
         else if(this.type === 'hash') {
-
+            // ignore
         }
         return this._inner.toString();
     }
@@ -486,7 +486,7 @@ class SIG {
     }
 
     toString() {
-        return `\$SIG{${this.code}} = `+this.routine.toString();
+        return `$SIG{${this.code}} = `+this.routine.toString();
     }
 
 }
@@ -590,7 +590,7 @@ IPrimeMethods.set('stdlib::regexp',new Set([
 class Primitive {
 
     constructor({type,name,template,value = 'undef'}) {
-        if("undefined" === typeof(name)) {
+        if('undefined' === typeof(name)) {
             name = 'anonymous';
         }
         if(IPrimeLibrairies.has(type) === false) {
@@ -618,7 +618,7 @@ class Primitive {
             }
         }
         if(type === 'array' || type === 'map') {
-            this.template = "undefined" === typeof(template) ? 'scalar' : template;
+            this.template = 'undefined' === typeof(template) ? 'scalar' : template;
         }
         this.name = name;
         this.constructValue = value;
@@ -631,12 +631,12 @@ class Primitive {
 
     static valueOf(SEAElement,assign = false,inline = false) {
         const rC = inline === true ? '' : ';\n';
-        const assignV = assign === true ? `my \$${SEAElement.name} = ` : '';
+        const assignV = assign === true ? `my $${SEAElement.name} = ` : '';
         if(SEAElement instanceof Arr || SEAElement instanceof HashMap) {
-            return `${assignV}\$${SEAElement.name}->clone()${rC}`;
+            return `${assignV}$${SEAElement.name}->clone()${rC}`;
         }
         else {
-            return `${assignV}\$${SEAElement.name}->valueOf()${rC}`;
+            return `${assignV}$${SEAElement.name}->valueOf()${rC}`;
         }
     }
 
@@ -645,7 +645,7 @@ class Primitive {
             throw new TypeError('SEAElement Instanceof primitive is false!');
         }
         const rC = inline === true ? '' : ';\n';
-        const value     = SEAElement.constructValue;
+        let value       = SEAElement.constructValue;
         const typeOf    = typeof(value);
         if(value instanceof Primitive) {
             return Primitive.valueOf(value,true,inline);
@@ -653,16 +653,16 @@ class Primitive {
         else if(value instanceof Routine) {
             const castCall = SEAElement.castScalar === true ? '->valueOf()' : '';
             return value.routineName === 'anonymous' ? 
-            `my \$${SEAElement.name} = ${value.toString()}${castCall}` : 
-            `my \$${SEAElement.name} = ${value.routineName}()${castCall}${rC}`;
+            `my $${SEAElement.name} = ${value.toString()}${castCall}` : 
+            `my $${SEAElement.name} = ${value.routineName}()${castCall}${rC}`;
         }
         else if(value instanceof PrimeMethod) {
-            return `my \$${SEAElement.name} = ${value.toString()}`;
+            return `my $${SEAElement.name} = ${value.toString()}`;
         }
         else {
             let assignHead = ''; 
             if(SEAElement.name !== 'anonymous') {
-                assignHead = `my \$${SEAElement.name} = `;
+                assignHead = `my $${SEAElement.name} = `;
             }
             if(SEAElement instanceof Str) {
                 return `${assignHead}${SEAElement.type}->new("${value}")${rC}`;
@@ -706,7 +706,7 @@ class PrimeMethod {
     }
 
     toString() {
-        return `\$${this.element.name}->${this.name}(${this.args.join(',')});\n`;
+        return `$${this.element.name}->${this.name}(${this.args.join(',')});\n`;
     }
 
 }
@@ -740,7 +740,7 @@ class Int extends Primitive {
     }
 
     add(value) {
-        if("undefined" === typeof(value)) {
+        if('undefined' === typeof(value)) {
             throw new Error('Undefined value');
         }
         return new PrimeMethod({
@@ -830,7 +830,7 @@ class Hash extends Primitive {
     static ToFormat(hashStr,tabSize = IDefaultConfiguration.tabSize) {
         const tabSpace = ' '.repeat(tabSize);
         hashStr = hashStr.replace('{','{\n')
-        .replace(/([a-zA-Z0-9]+\s*\=\>)/g,function(m) {
+        .replace(/([a-zA-Z0-9]+\s*=>)/g,function(m) {
             return tabSpace+m;
         })
         .replace(/([};]+)/g,function(m) {
@@ -865,7 +865,7 @@ class Hash extends Primitive {
                 }
             });
             return `(${arr.join(',')})`;
-        }
+        };
 
         const parse = function(_O) {
             let ret = '{';
@@ -873,7 +873,7 @@ class Hash extends Primitive {
                 const v = _O[k];
                 const typeOf = typeof(v);
                 if(v instanceof Array) {
-                    ret+=`${k} => ${parseArray(v)},`
+                    ret+=`${k} => ${parseArray(v)},`;
                 }
                 else if(typeOf === 'object') {
                     ret+=`${k} => ${parse(v)},`;
@@ -889,7 +889,7 @@ class Hash extends Primitive {
                 }
             }
             return ret.slice(0,-1)+'}';
-        }
+        };
 
         return Hash.ToFormat(parse(object));
     }
@@ -968,4 +968,4 @@ module.exports = {
     Scalar,
     Primitive,
     Print
-}
+};
