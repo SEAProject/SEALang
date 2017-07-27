@@ -1,4 +1,9 @@
 const events = require('events');
+const { writeFile } = require('fs');
+const { promisify } = require('util');
+const { join } = require('path');
+
+const asyncWrite = promisify(writeFile);
 
 const IDefaultConfiguration = {
     tabSize: 2
@@ -210,12 +215,16 @@ class File extends Expr {
     /*
      * Write file to string location
      */
-    write() {
+    async write(strLocation) {
         let filecode = super.toString();
         if(this.isModule) {
             filecode += '1;';
         }
         console.log(filecode);
+        const finalStrPath = join( strLocation, `${this.name}.pl` ); 
+        console.log(`Write final final with name => ${finalStrPath}`);
+        await asyncWrite(finalStrPath,filecode);
+
     }
 
 }
@@ -362,7 +371,7 @@ class Print {
             message = `$${message.name}->valueOf()`;
         }
         const sep = newLine === true ? '\\n' : '';
-        this.value = `print("${message}${sep}");\n`;
+        this.value = `print(${message}."${sep}");\n`;
     }
 
     toString() {
@@ -539,6 +548,14 @@ class Primitive {
         this.value = value;
     }
 
+    method(name,...args) {
+        return new PrimeMethod({
+            name,
+            args,
+            element: this
+        });
+    }
+
     get type() {
         return this.libtype.std;
     }
@@ -638,6 +655,48 @@ class Str extends Primitive {
         });
     }
 
+    freeze() {
+        return this.method('freeze');
+    }
+
+    length() {
+        return this.method('length');
+    }
+
+    isEqual(element) {
+        if("undefined" === typeof(element)) {
+            throw new Error('Undefined element');
+        }
+        return this.method('isEqual',element);
+    }
+
+    repeat(count) {
+        if("undefined" === typeof(count)) {
+            count = 1;
+        }
+        return this.method('repeat',count);
+    }
+
+    trim() {
+        return this.method('trim');
+    }
+
+    trimLeft() {
+        return this.method('trimLeft');
+    }
+
+    trimRight() {
+        return this.method('trimRight');
+    }
+
+    toLowerCase() {
+        return this.method('toLowerCase');
+    }
+
+    toUpperCase() {
+        return this.method('toUpperCase');
+    }
+
 }
 
 /*
@@ -653,15 +712,36 @@ class Int extends Primitive {
         });
     }
 
+    freeze() {
+        return this.method('freeze');
+    }
+
     add(value) {
         if('undefined' === typeof(value)) {
             throw new Error('Undefined value');
         }
-        return new PrimeMethod({
-            name: 'add',
-            args: [value],
-            element: this
-        });
+        return this.method('add',value);
+    }
+
+    sub(value) {
+        if('undefined' === typeof(value)) {
+            throw new Error('Undefined value');
+        }
+        return this.method('sub',value);
+    }
+
+    mul(value) {
+        if('undefined' === typeof(value)) {
+            throw new Error('Undefined value');
+        }
+        return this.method('mul',value);
+    }
+
+    div(value) {
+        if('undefined' === typeof(value)) {
+            throw new Error('Undefined value');
+        }
+        return this.method('div',value);
     }
 
 }
@@ -695,19 +775,19 @@ class Arr extends Primitive {
         });
     }
 
+    freeze() {
+        return this.method('freeze');
+    }
+
     get(index) {
-        return new PrimeMethod({
-            name: 'get',
-            args: [index],
-            element: this
-        });
+        if("undefined" === typeof(index)) {
+            throw new Error('Undefined index argument');
+        }
+        return this.method('get',index);
     }
 
     size() {
-        return new PrimeMethod({
-            name: 'size',
-            element: this
-        });
+        return this.method('size');
     }
 
 }
