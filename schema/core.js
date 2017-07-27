@@ -187,6 +187,7 @@ class Expr extends events {
 const FileDefaultDepencies = new Set([
     'strict',
     'warnings',
+    'stdlib.util',
     'stdlib.array',
     'stdlib.hashmap',
     'stdlib.integer',
@@ -466,6 +467,16 @@ class Evaluation extends Expr {
 
     constructor() {
         super();
+        this.catchExpr = new Condition('if','$@');
+        this.catchExpr.add(new Print('$@',true));
+    }
+
+    get catch() {
+        return this.catchExpr;
+    }
+
+    toString() {
+        return `eval `+super.toString()+this.catchExpr.toString();
     }
 
 }
@@ -670,11 +681,47 @@ class Str extends Primitive {
         return this.method('isEqual',element);
     }
 
+    substr(start,end) {
+        return this.method('substr',start,end);
+    }
+
+    clone() {
+        return this.method('clone');
+    }
+
+    slice(start,end) {
+        return this.method('slice',start,end);
+    }
+
+    last() {
+        return this.method('last');
+    }
+
+    charAt(index) {
+        return this.method('charAt',index);
+    }
+
+    charCodeAt(index) {
+        return this.method('charCodeAt',index);
+    }
+
     repeat(count) {
         if("undefined" === typeof(count)) {
             count = 1;
         }
         return this.method('repeat',count);
+    }
+
+    constains(substring) {
+        return this.method('contains',substring);
+    }
+
+    containsRight(substring) {
+        return this.method('containsRight',substring);
+    }
+
+    split(carac) {
+        return this.method('split',carac);
     }
 
     trim() {
@@ -714,6 +761,10 @@ class Int extends Primitive {
 
     freeze() {
         return this.method('freeze');
+    }
+
+    length() {
+        return this.method('length');
     }
 
     add(value) {
