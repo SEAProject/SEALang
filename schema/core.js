@@ -14,9 +14,8 @@ const IDefaultConfiguration = {
  */
 class Expr extends events {
 
-    constructor({ tabSize = IDefaultConfiguration.tabSize, addblock = true } = {}) {
+    constructor({ addblock = true } = {}) {
         super();
-        this.tabSpace = tabSize === 0 ? '' : ' '.repeat(tabSize);
         this.closed = false;
         this.addblock = addblock;
         this.rootExpr = undefined;
@@ -34,7 +33,6 @@ class Expr extends events {
             throw new Error('Invalid root variable. Instanceof have to be equal to Expr.');
         }
         this.rootExpr = root;
-        this.tabSpace = root.tabSpace.length === 0 ? ' '.repeat(IDefaultConfiguration.tabSize) : root.tabSpace+' '.repeat(IDefaultConfiguration.tabSize);
         return this;
     }
 
@@ -156,27 +154,19 @@ class Expr extends events {
         return this.scope.routines.has(routineName);
     }
 
-    get rootTab() {
-        if('undefined' === typeof(this.rootExpr)) {
-            return this.tabSpace;
-        }
-        return this.rootExpr.tabSpace.length === 0 ? '' : this.rootExpr.tabSpace;
-    }
-
     toString() {
         if(this.elements.length === 0) return '';
         let finalStr = '';
         for(let i = 0,len = this.elements.length;i<len;i++) {
             const element = this.elements[i];
             if(typeof(element) === 'string') {
-                finalStr+=this.tabSpace+element;
+                finalStr+=element;
             }
             else {
                 finalStr+=element.toString();
             }
         }
-        const tabBlock = 'undefined' === typeof(this.rootExpr) ? '' : this.rootExpr.tabSpace;
-        return this.addblock === true ? `{\n${finalStr}${tabBlock}};\n` : finalStr;
+        return this.addblock === true ? `{\n${finalStr}};\n` : finalStr;
     }
 
 }
@@ -199,7 +189,6 @@ class File extends Expr {
 
     constructor({name,isModule = false}) {
         super({
-            tabSize: 0,
             addblock: false
         });
         if(typeof (name) !== 'string') {
@@ -213,6 +202,26 @@ class File extends Expr {
         this.headerDone = true;
     }
 
+    formatCode(filecode) {
+        let tabSpace = '  ';
+        let incre = 0; 
+        return filecode.split('\n').map( line => {
+            const cIncre = incre;
+            let matchClose = false;
+            if(line.match(/{/g)) {
+                incre++;
+            }
+            else if(line.match(/}/g)) {
+                incre--;
+                matchClose = true;
+            }
+            if(incre === 0) {
+                return line;
+            }
+            return tabSpace.repeat(matchClose ? incre : cIncre)+line;
+        }).join('\n');
+    }
+
     /*
      * Write file to string location
      */
@@ -221,6 +230,7 @@ class File extends Expr {
         if(this.isModule) {
             filecode += '1;';
         }
+        filecode = this.formatCode(filecode);
         console.log(filecode);
         const finalStrPath = join( strLocation, `${this.name}.pl` ); 
         console.log(`Write final final with name => ${finalStrPath}`);
@@ -278,7 +288,7 @@ class Routine extends Expr {
     }
 
     toString() {
-        return `${this.rootTab}sub ${this.name}`+super.toString();
+        return `sub ${this.name}`+super.toString();
     }
 
 }
@@ -409,7 +419,7 @@ class Condition extends Expr {
     }
 
     toString() {
-        return `${this.rootTab}${this.cond} (${this.expr}) `+super.toString();
+        return `${this.cond} (${this.expr}) `+super.toString();
     }
 
 }
