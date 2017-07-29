@@ -76,6 +76,9 @@ class Expr extends events {
          */
         const rootDefined = 'undefined' === typeof(element.rootExpr);
         if(element instanceof Dependency) {
+            if(this instanceof File === false) {
+                throw new Error('Cannot add dependency on non-file expr class!');
+            }
             if(rootDefined) {
                 if(this.headerDone === true) {
                     this.elements.unshift(element.toString());
@@ -431,40 +434,23 @@ class While extends Expr {
 
     constructor(SEAElement) {
         super();
-        this._inner = new Expr();
-        this.setRoot(this._inner);
-        if(SEAElement instanceof HashMap) {
-            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
-            this.add(new PrimeRef('element',SEAElement.get(this.incre)));
-            this.type = 'map';
-        }
-        else if(SEAElement instanceof Hash) {
-            this.type = 'hash';
-        }
-        else if(SEAElement instanceof Arr) {
+        if(SEAElement instanceof Arr) {
+            this._inner = new Expr();
+            this.setRoot(this._inner);
             this.incre = new Int('i',0);
             this._inner.add(this.incre);
             this._inner.add(new Int('len',SEAElement.size()));
             const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
             this.add(new PrimeRef('element',SEAElement.get(this.incre)));
-            this.type = 'array';
         }
         else {
-            throw new Error('Unsupported type for While block!');
+            throw new TypeError('Unsupported type for While block!');
         }
     }
 
     toString() {
-        if(this.type === 'array') {
-            this.add(this.incre.add(1));
-            this._inner.add(`while($i < $len) ${super.toString()}`);
-        }
-        else if(this.type === 'map') {
-            // ignore
-        }
-        else if(this.type === 'hash') {
-            // ignore
-        }
+        this.add(this.incre.add(1));
+        this._inner.add(`while($i < $len) ${super.toString()}`);
         return this._inner.toString();
     }
 
@@ -630,6 +616,15 @@ class Primitive {
                     return `${assignHead}${Hash.ObjectToHash(value)}${rC}`;
                 }
                 throw new Error('Invalid hash type argument!');
+            }
+            else if(SEAElement instanceof HashMap) {
+                if(SEAElement.template !== 'scalar') {
+                    const primeRef = IPrimeLibrairies.get(SEAElement.template).schema;
+                    for(let [k,v] of Object.entries(value)) {
+                        value[k] = Primitive.constructorOf(new primeRef(void 0,v),true);
+                    }
+                }
+                return `${assignHead}${SEAElement.type}->new(${Hash.ObjectToHash(value)})${rC}`;
             }
             else if(SEAElement instanceof Arr && SEAElement.template !== 'scalar') {
                 const primeRef = IPrimeLibrairies.get(SEAElement.template).schema;
@@ -867,6 +862,21 @@ class HashMap extends Primitive {
         });
     }
 
+    forEach(routine) {
+        if(routine instanceof Routine === false) {
+            throw new TypeError('Invalid routine type!');
+        }
+        return this.method('forEach',routine);
+    }
+
+    get(value) {
+        return this.method('get',value);
+    }
+
+    set(key,value) {
+        return this.method('set',key,value);
+    }
+
 }
 
 /*
@@ -880,19 +890,6 @@ class Hash extends Primitive {
             name: varName,
             value: valueOf,
         });
-    }
-
-    static ToFormat(hashStr,tabSize = 2) {
-        const tabSpace = ' '.repeat(tabSize);
-        hashStr = hashStr.replace('{','{\n')
-        .replace(/([a-zA-Z0-9]+\s*=>)/g,function(m) {
-            return tabSpace+m;
-        })
-        .replace(/([};]+)/g,function(m) {
-            return `\n${m}`;
-        })
-        .replace(',',',\n');
-        return hashStr;
     }
 
     static ObjectToHash(object) {
@@ -934,7 +931,7 @@ class Hash extends Primitive {
                     ret+=`${k} => ${parse(v)},`;
                 }
                 else if(typeOf === 'string') {
-                    ret+=`${k} => "${v}",`;
+                    ret+=`${k} => ${v},`;
                 }
                 else if(typeOf === 'boolean') {
                     ret+=`${k} => ${v === true ? 1 : 0},`;
@@ -946,7 +943,7 @@ class Hash extends Primitive {
             return ret.slice(0,-1)+'}';
         };
 
-        return Hash.ToFormat(parse(object));
+        return parse(object);
     }
     
 }

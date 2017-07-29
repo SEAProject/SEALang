@@ -1,10 +1,8 @@
 const {
     File,
     Print,
-    Routine,
-    Condition,
-    Evaluation,
-    ReturnStatment,
+    While,
+    HashMap,
     Int,
     Str
 } = require('./schema/core.js');
@@ -18,9 +16,14 @@ setImmediate( async function() {
     });
 
     perlCode.breakline();
-    const myEval = new Evaluation();
-    myEval.add(new Str('test','hello world!'));
-    perlCode.add(myEval);
+    const hM = new HashMap('test','integer',{
+        'a': 5,
+        'b': 10
+    });
+    perlCode.add(hM);
+    perlCode.breakline();
+    const wM = new While(hM);
+    perlCode.add(wM);
 
     await perlCode.write( join( __dirname, '..' , 'source' ) );
     process.exit(0);
