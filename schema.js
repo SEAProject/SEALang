@@ -863,6 +863,27 @@ class Arr extends Primitive {
         return this.method('freeze');
     }
 
+    forEach(routine) {
+        if(routine instanceof Routine === false) {
+            throw new TypeError('Invalid routine type!');
+        }
+        return this.method('forEach',routine);
+    }
+
+    map(routine) {
+        if(routine instanceof Routine === false) {
+            throw new TypeError('Invalid routine type!');
+        }
+        return this.method('map',routine);
+    }
+
+    every(routine) {
+        if(routine instanceof Routine === false) {
+            throw new TypeError('Invalid routine type!');
+        }
+        return this.method('every',routine);
+    }
+
     get(index) {
         if("undefined" === typeof(index)) {
             throw new Error('Undefined index argument');
