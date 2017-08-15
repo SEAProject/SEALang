@@ -22,8 +22,7 @@ setImmediate( async function() {
     });
     perlCode.add(hM);
     perlCode.breakline();
-    const wM = new While(hM);
-    perlCode.add(wM);
+    perlCode.add(hM.forEach());
 
     await perlCode.write( join( __dirname, '..' , 'source' ) );
     process.exit(0);

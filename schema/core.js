@@ -412,7 +412,7 @@ const IConditionBlock = new Set(['if','else','elif']);
 class Condition extends Expr {
 
     constructor(cond,expr) {
-        super({});
+        super();
         if(IConditionBlock.has(cond) === false) {
             throw new Error('Unknown condition type!');
         }
@@ -434,24 +434,40 @@ class While extends Expr {
 
     constructor(SEAElement) {
         super();
-        if(SEAElement instanceof Arr) {
-            this._inner = new Expr();
-            this.setRoot(this._inner);
-            this.incre = new Int('i',0);
-            this._inner.add(this.incre);
-            this._inner.add(new Int('len',SEAElement.size()));
-            const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
-            this.add(new PrimeRef('element',SEAElement.get(this.incre)));
-        }
-        else {
+        if(SEAElement instanceof Arr === false) {
             throw new TypeError('Unsupported type for While block!');
         }
+        this._inner = new Expr();
+        this.setRoot(this._inner);
+        this.incre = new Int('i',0);
+        this._inner.add(this.incre);
+        this._inner.add(new Int('len',SEAElement.size()));
+        const PrimeRef = IPrimeLibrairies.get(SEAElement.template).schema;
+        this.add(new PrimeRef('element',SEAElement.get(this.incre)));
     }
 
     toString() {
         this.add(this.incre.add(1));
         this._inner.add(`while($i < $len) ${super.toString()}`);
         return this._inner.toString();
+    }
+
+}
+
+/*
+ * Foreach block!
+ */
+class Foreach extends Expr {
+
+    constructor(SEAElement) {
+        super();
+        if(SEAElement instanceof HashMap === false) {
+            throw new TypeError('Unsupported type for Foreach block!');
+        }
+    }
+
+    toString() {
+
     }
 
 }
@@ -671,6 +687,10 @@ class Str extends Primitive {
         });
     }
 
+    valueOf() {
+        return this.method('valueOf');
+    }
+
     freeze() {
         return this.method('freeze');
     }
@@ -764,6 +784,10 @@ class Int extends Primitive {
         });
     }
 
+    valueOf() {
+        return this.method('valueOf');
+    }
+
     freeze() {
         return this.method('freeze');
     }
@@ -815,6 +839,10 @@ class Bool extends Primitive {
         });
     }
 
+    valueOf() {
+        return this.method('valueOf');
+    }
+
 }
 
 /*
@@ -862,11 +890,31 @@ class HashMap extends Primitive {
         });
     }
 
+    freeze() {
+        return this.method('freeze');
+    }
+
+    clear() {
+        return this.method('clear');
+    }
+
+    keys() {
+        return this.method('keys');
+    }
+
+    values() {
+        return this.method('values');
+    }
+
     forEach(routine) {
         if(routine instanceof Routine === false) {
             throw new TypeError('Invalid routine type!');
         }
         return this.method('forEach',routine);
+    }
+
+    size() {
+        return this.method('size');
     }
 
     get(value) {
@@ -875,6 +923,13 @@ class HashMap extends Primitive {
 
     set(key,value) {
         return this.method('set',key,value);
+    }
+
+    delete(key) {
+        if('undefined' === typeof(key)) {
+            throw new TypeError('Undefined key!');
+        }
+        return this.method('delete',key);
     }
 
 }
@@ -1010,6 +1065,7 @@ module.exports = {
     Condition,
     SIG,
     While,
+    Foreach,
     Print,
     Primitive,
     Hash,
