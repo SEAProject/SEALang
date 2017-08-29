@@ -5,7 +5,7 @@ const {
     HashMap,
     Int,
     Str
-} = require('./schema.js');
+} = require('./index.js');
 const { join } = require('path');
 
 setImmediate( async function() {
