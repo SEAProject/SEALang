@@ -2,11 +2,7 @@
 
 Schema API writed in JavaScript to generate Perl5 code for SEA Compiler.
 
-# Roadmap (project) 
-
-- Split code in multiple part without circular dependencies!
-
-# Roadmap (Schema API).
+# Roadmap
 
 - [x] Routine arguments with shift.
 - [x] Routine return statment support. 
@@ -17,11 +13,11 @@ Schema API writed in JavaScript to generate Perl5 code for SEA Compiler.
 - [x] Scalar implementation.
 - [x] Work on Hash Primitive!
 - [x] Implement argv!
-- Implement new custom Errors (DefineError,CastError,etc...)
+- [x] Implement evaluation.
+- [x] Implement PrimeMethod for every stdlib primitives.
 - Add variables and routines scope seeker.
-- Work on foreach prototype (Support both HashMap and Array Primitive).
-- Work on hash & map casting.
+- Work on foreach prototype (Support both HashMap & Hash).
 - Work on hash tabspace formatting.
-- Implement PrimeMethod for every stdlib primitives.
 - Implement dump method!
-- Implement evaluation.
+- Work on Blessed implementation.
+- Work on RegExp implementation.
