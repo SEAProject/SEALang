@@ -971,6 +971,10 @@ class Str extends Primitive {
         });
     }
 
+    updateValue(newValue) {
+        return this.method('updateValue',newValue);
+    }
+
     valueOf() {
         return this.method('valueOf');
     }
@@ -1075,6 +1079,10 @@ class Int extends Primitive {
         });
     }
 
+    updateValue(newValue) {
+        return this.method('updateValue',newValue);
+    }
+
     valueOf() {
         return this.method('valueOf');
     }
@@ -1135,6 +1143,10 @@ class Bool extends Primitive {
             name: varName,
             value: valueOf ? 1 : 0,
         });
+    }
+
+    updateValue(newValue) {
+        return this.method('updateValue',newValue);
     }
 
     // @PrimeMethod Bool.valueOf
