@@ -25,10 +25,6 @@ const IExprConstructor = {
  * @property {Boolean} headerDone
  * @property {Array} childrensExpr 
  * @property {Array} elements 
- * @property {Object} scope [
- *     {Map} variables
- *     {Map} routines
- * ]
  * 
  * @events [
  * ]
@@ -47,10 +43,6 @@ class Expr extends events {
         this.headerDone = false;
         this.childrensExpr = [];
         this.elements = [];
-        this.scope = {
-            variables: new Map(),
-            routines: new Map()
-        };
     }
 
     /*
@@ -178,12 +170,8 @@ class Expr extends events {
          * Register variables and routines for seeker mechanism.
          */
         if(element instanceof Primitive) {
-            this.scope.variables.set(element.name,element);
             this.elements.push( Primitive.constructorOf(element) );
             return;
-        }
-        if(element instanceof Routine) {
-            this.scope.routines.set(element.name,element);
         }
 
         if(element instanceof Print || element instanceof RoutineShifting || element instanceof PrimeMethod) {
@@ -194,29 +182,6 @@ class Expr extends events {
         this.elements.push( element );
         return this;
     }
-    
-    /*
-     * if Expr has a variable ! 
-     * @function Expr.hasVar
-     * @param {String} varName
-     * @return Boolean
-     */
-    hasVar(varName) {
-        if('string' !== typeof(varName)) return false;
-        return this.scope.variables.has(varName);
-    }
-
-    /*
-     * if Expr has a routine ! 
-     * @function Expr.hasRoutine
-     * @param {String} routineName
-     * @return Boolean
-     */
-    hasRoutine(routineName) {
-        if('string' !== typeof(routineName)) return false;
-        return this.scope.routines.has(routineName);
-    }
-
     /*
      * toString() Expr stack
      * @function Expr.toString

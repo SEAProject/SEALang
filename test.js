@@ -1,6 +1,7 @@
 const {
     File,
     HashMap,
+    Foreach
 } = require('./index.js');
 const { join } = require('path');
 
