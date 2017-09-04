@@ -193,7 +193,12 @@ class Expr extends events {
         let i = 0,len = this.elements.length;
         for(;i<len;i++) {
             const element = this.elements[i];
-            finalStr = finalStr + typeof(element) === 'string' ? element : element.toString();
+            if('string' === typeof(element)) {
+                finalStr+=element;
+            }
+            else {
+                finalStr+=element.toString();
+            }
         }
         return this.addblock === true ? `{\n${finalStr}};\n` : finalStr;
     }
@@ -286,18 +291,24 @@ class File extends Expr {
      * Write file to string location
      * @function File.write
      * @param {String} strLocation
-     * @return void 0
+     * @return String
      */
-    async write(strLocation) {
+    async write(strLocation,debug = false) {
+        if('undefined' === typeof(strLocation)) {
+            throw new TypeError('strLocation cant be undefined!');
+        }
         let filecode = super.toString();
-        if(this.isModule) {
+        if(this.isModule === true) {
             filecode += '1;';
         }
         filecode = this.indentCode(filecode);
-        console.log(filecode);
+        if(debug === true) {
+            console.log(filecode);
+        }
         const finalStrPath = join( strLocation, `${this.name}.pl` ); 
         console.log(`Write final final with name => ${finalStrPath}`);
         await asyncWrite(finalStrPath,filecode);
+        return filecode;
     }
 
 }
