@@ -854,14 +854,14 @@ class Primitive {
      * @param {Boolean} inline
      * @return String
      */
-    static valueOf(SEAElement,assign = false,inline = false) {
+    static valueOf(parentElement,childrenElement,assign = false,inline = false) {
         const rC = inline === true ? '' : ';\n';
-        const assignV = assign === true ? `my $${SEAElement.name} = ` : '';
-        if(SEAElement instanceof Arr === true || SEAElement instanceof HashMap === true) {
-            return `${assignV}$${SEAElement.name}->clone()${rC}`;
+        const assignV = assign === true ? `my $${parentElement.name} = ` : '';
+        if(childrenElement instanceof Arr === true || childrenElement instanceof HashMap === true) {
+            return `${assignV}$${childrenElement.name}->clone()${rC}`;
         }
         else {
-            return `${assignV}$${SEAElement.name}->valueOf()${rC}`;
+            return `${assignV}$${childrenElement.name}->valueOf()${rC}`;
         }
     }
 
@@ -879,7 +879,7 @@ class Primitive {
         let value       = SEAElement.constructValue;
         const typeOf    = typeof(value);
         if(value instanceof Primitive === true) {
-            return Primitive.valueOf(value,true,inline);
+            return Primitive.valueOf(SEAElement,value,true,inline);
         }
         else if(value instanceof Routine === true) {
             const castCall = SEAElement.castScalar === true ? '->valueOf()' : '';
@@ -948,7 +948,7 @@ class PrimeMethod {
         this.name = name;
         this.element = element;
         this.args = args.map( val => {
-            return val instanceof Primitive ? Primitive.valueOf(val,false,true) : val;
+            return val instanceof Primitive ? Primitive.valueOf(element,val,false,true) : val;
         });
     }
 
