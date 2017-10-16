@@ -7,7 +7,7 @@ const { join } = require('path');
 // Create async writeFile
 const asyncWrite = promisify(writeFile);
 
-/*
+/**
  * Interface for Expr.constructor
  * @interface IExprConstructor
  */
@@ -15,7 +15,7 @@ const IExprConstructor = {
     addblock: true
 };
 
-/*
+/**
  * Expr block code (represent a normal expression).
  * @class Expr
  * @extends events
@@ -26,12 +26,10 @@ const IExprConstructor = {
  * @property {Array} childrensExpr 
  * @property {Array} elements 
  * 
- * @events [
- * ]
  */
 class Expr extends events {
 
-    /*
+    /**
      * @constructor
      * @param {IExprConstructor} options
      */
@@ -45,7 +43,7 @@ class Expr extends events {
         this.elements = [];
     }
 
-    /*
+    /**
      * set the Expr root
      * @function Expr.setRoot
      * @param {Expr} root
@@ -59,7 +57,7 @@ class Expr extends events {
         return this;
     }
 
-    /*
+    /**
      * add a new Perl package
      * @function Expr.setPackage
      * @param {String} packageName
@@ -74,7 +72,7 @@ class Expr extends events {
         return this;
     }
 
-    /*
+    /**
      * Add a breakline into the perl code
      * @function Expr.breakline
      * @return Self
@@ -84,7 +82,7 @@ class Expr extends events {
         return this;
     }
 
-    /*
+    /**
      * Add a new element into the Expr stack
      * @function Expr.add
      * @param {Any} element
@@ -182,7 +180,8 @@ class Expr extends events {
         this.elements.push( element );
         return this;
     }
-    /*
+
+    /**
      * toString() Expr stack
      * @function Expr.toString
      * @return String
@@ -205,8 +204,10 @@ class Expr extends events {
 
 }
 
-/*
+/**
  * Default SEALang Perl package dependencies
+ * @const FileDefaultDepencies
+ * @type {Set<String>}
  */ 
 const FileDefaultDepencies = new Set([
     'strict',
@@ -219,7 +220,7 @@ const FileDefaultDepencies = new Set([
     'stdlib.boolean'
 ]);
 
-/*
+/**
  * Interface for File.constructor
  * @interface IFileConstructor
  */
@@ -227,7 +228,7 @@ const IFileConstructor = {
     isModule: false
 };
 
-/*
+/**
  * @class File
  * @extend Expr
  * 
@@ -236,7 +237,7 @@ const IFileConstructor = {
  */
 class File extends Expr {
 
-    /*
+    /**
      * @constructor
      * @param {IFileConstructor} options
      */
@@ -260,7 +261,7 @@ class File extends Expr {
         this.headerDone = true;
     }
 
-    /*
+    /**
      * Format perl code correctly (with the right indentation)
      * @function File.indentCode
      * @param {String} strCode
@@ -287,7 +288,7 @@ class File extends Expr {
         }).join('\n');
     }
 
-    /*
+    /**
      * Write file to string location
      * @function File.write
      * @param {String} strLocation
@@ -313,14 +314,14 @@ class File extends Expr {
 
 }
 
-/*
+/**
  * @class Dependency 
  * 
  * @property {String} value
  */
 class Dependency {
 
-    /*
+    /**
      * @constructor 
      * @param {String} pkgName
      * @param {Array} requiredVars
@@ -339,7 +340,7 @@ class Dependency {
         this.value = ret === true ? `use ${pkgName};\n` : `use ${pkgName} qw(${requiredVars.join(' ')});\n`;
     }
 
-    /*
+    /**
      * @function Dependency.toString
      * @return String
      */
@@ -349,7 +350,7 @@ class Dependency {
 
 }
 
-/*
+/**
  * Constructor interface of Routine
  * @interface IRoutineConstructor
  */
@@ -358,7 +359,7 @@ const IRoutineConstructor = {
     shifting: false
 };
 
-/*
+/**
  * Routine elements (Shiting,ReturnStatment and Routine)
  * @class Routine
  * @extends Expr 
@@ -372,7 +373,7 @@ const IRoutineConstructor = {
  */
 class Routine extends Expr {
 
-    /*
+    /**
      * @constructor
      * @param {IRoutineConstructor} options
      */
@@ -398,7 +399,7 @@ class Routine extends Expr {
         }
     }
 
-    /*
+    /**
      * toString() Routine Expr
      * @function Routine.toString
      * @return String
@@ -409,7 +410,7 @@ class Routine extends Expr {
 
 }
 
-/*
+/**
  * Routine Shifting
  * @class RoutineShifting
  * 
@@ -417,7 +418,7 @@ class Routine extends Expr {
  */
 class RoutineShifting {
 
-    /*
+    /**
      * @constructor 
      * @param {Array} variables
      * @param {Boolean} shifting
@@ -449,7 +450,7 @@ class RoutineShifting {
         }
     }
 
-    /*
+    /**
      * @function RoutineShifting.toString
      * @return String
      */
@@ -459,7 +460,7 @@ class RoutineShifting {
 
 }
 
-/*
+/**
  * Return routine statment!
  * @class ReturnStatment
  * 
@@ -467,7 +468,7 @@ class RoutineShifting {
  */
 class ReturnStatment {
 
-    /*
+    /**
      * @constructor 
      * @param {Any} expr
      */
@@ -504,7 +505,7 @@ class ReturnStatment {
         }
     }
 
-    /*
+    /**
      * @function ReturnStatment.toString
      * @return String
      */
@@ -514,7 +515,7 @@ class ReturnStatment {
 
 }
 
-/*
+/**
  * Implementation of Print method
  * @class Print
  * 
@@ -522,7 +523,7 @@ class ReturnStatment {
  */
 class Print {
 
-    /*
+    /**
      * @constructor 
      * @param {String} message
      * @param {Boolean} newLine
@@ -540,7 +541,7 @@ class Print {
         this.value = `print(${message}."${newLine === true ? '\\n' : ''}");\n`;
     }
 
-    /*
+    /**
      * toString() print method 
      * @function Print.toString
      * @return String
@@ -551,7 +552,7 @@ class Print {
 
 }
 
-/*
+/**
  * Process var
  */
 const Process = {
@@ -561,7 +562,7 @@ const Process = {
     }
 };
 
-/*
+/**
  * Condition Enumeration
  * @enum EConditionBlock
  * 
@@ -571,7 +572,7 @@ const Process = {
  */
 const EConditionBlock = new Set(['if','else','elif']);
 
-/*
+/**
  * @class Condition
  * @extends Expr 
  * 
@@ -580,7 +581,7 @@ const EConditionBlock = new Set(['if','else','elif']);
  */
 class Condition extends Expr {
 
-    /*
+    /**
      * @constructor
      * @param {String} cond
      * @param {String} expr
@@ -598,7 +599,7 @@ class Condition extends Expr {
         this.expr = this.expr.replace(';','').replace('\n','');
     }
 
-    /*
+    /**
      * @function Condition.toString
      * @return String
      */
@@ -608,7 +609,7 @@ class Condition extends Expr {
 
 }
 
-/*
+/**
  * Classical While (only for SEA.Array and maybe array late)
  * @class While
  * @extends Expr 
@@ -618,7 +619,7 @@ class Condition extends Expr {
  */
 class While extends Expr {
 
-    /*
+    /**
      * @constructor 
      * @param {SEA.Array} SEAArray
      */
@@ -636,7 +637,7 @@ class While extends Expr {
         this.add(new PrimeRef('element',SEAArray.get(this.incre)));
     }
 
-    /*
+    /**
      * @function While.toString
      * @return String
      */
@@ -648,14 +649,14 @@ class While extends Expr {
 
 }
 
-/*
+/**
  * Foreach block Expr (for HashMap or Hash)
  * @class Foreach
  * @extends Expr
  */
 class Foreach extends Expr {
 
-    /*
+    /**
      * @constructor
      * @param {SEA.HashMap} SEAHash
      */
@@ -666,7 +667,7 @@ class Foreach extends Expr {
         }
     }
 
-    /*
+    /**
      * @function Foreach.toString
      * @return String
      */
@@ -676,7 +677,7 @@ class Foreach extends Expr {
 
 }
 
-/*
+/**
  * Evaluation (try/catch emulation)
  * @class Evaluation
  * @extends Expr 
@@ -685,7 +686,7 @@ class Foreach extends Expr {
  */
 class Evaluation extends Expr {
 
-    /*
+    /**
      * @constructor
      */
     constructor() {
@@ -700,7 +701,7 @@ class Evaluation extends Expr {
         }
     }
 
-    /*
+    /**
      * @getter Evaluation.catch
      * @return Self.catchExpr
      */
@@ -708,7 +709,7 @@ class Evaluation extends Expr {
         return this.catchExpr;
     }
 
-    /*
+    /**
      * @function Evaluation.toString
      * @return String
      */
@@ -718,7 +719,7 @@ class Evaluation extends Expr {
 
 }
 
-/*
+/**
  * Enum SIG Event handler
  * @enum EAvailableSIG
  */
@@ -730,7 +731,7 @@ const EAvailableSIG = new Set([
     'HUP'
 ]);
 
-/*
+/**
  * @class SIG
  * 
  * @property {String} code
@@ -738,7 +739,7 @@ const EAvailableSIG = new Set([
  */
 class SIG {
 
-    /*
+    /**
      * constructor
      * @param {String} code
      * @param {Routine} routineHandler
@@ -754,7 +755,7 @@ class SIG {
         this.routine = routineHandler;
     }
 
-    /*
+    /**
      * @function SIG.toString
      * @return String
      */
@@ -772,7 +773,7 @@ class SIG {
 const IPrimeLibrairies = new Map();
 const IPrimeScalarCast = new Set(['stdlib::integer','stdlib::string','stdlib::boolean']);
 
-/*
+/**
  * Primitive abstraction handler
  * @class Primitive
  * 
@@ -785,7 +786,7 @@ const IPrimeScalarCast = new Set(['stdlib::integer','stdlib::string','stdlib::bo
  */
 class Primitive {
 
-    /*
+    /**
      * @constructor
      */
     constructor({type,name,template,value = 'undef'}) {
@@ -824,7 +825,7 @@ class Primitive {
         this.value = value;
     }
 
-    /*
+    /**
      * @function Primitive.method
      * @param {String} name
      * @param {...<any>} args
@@ -838,7 +839,7 @@ class Primitive {
         });
     }
 
-    /*
+    /**
      * Get libtype type
      * @getter Primitive.type
      * @return String
@@ -847,7 +848,7 @@ class Primitive {
         return this.libtype.std;
     }
 
-    /*
+    /**
      * @static Primitive.valueOf
      * @param {instanceof Primitive} SEAElement
      * @param {Boolean} assign
@@ -865,7 +866,7 @@ class Primitive {
         }
     }
 
-    /*
+    /**
      * @static Primitive.constructorOf
      * @param {Any} SEAElement
      * @param {Boolean} inline
@@ -932,13 +933,13 @@ class Primitive {
 
 }
 
-/*
+/**
  * Primitive Method
  * @class PrimeMehthod
  */
 class PrimeMethod {
 
-    /*
+    /**
      * @constructor
      */
     constructor({name,element,args = []}) {
@@ -952,7 +953,7 @@ class PrimeMethod {
         });
     }
 
-    /*
+    /**
      * @function PrimeMethod.toString
      * @return String
      */ 
@@ -962,7 +963,7 @@ class PrimeMethod {
 
 }
 
-/*
+/**
  * SEA String
  * @class Str
  * @extends Primitive
@@ -1070,14 +1071,14 @@ class Str extends Primitive {
 
 }
 
-/*
+/**
  * SEA Integer
  * @class Int
  * @extends Primitive
  */
 class Int extends Primitive {
 
-    /*
+    /**
      * @constructor
      * @param {String} varName
      * @param {String} valueOf
@@ -1136,7 +1137,7 @@ class Int extends Primitive {
 
 }
 
-/*
+/**
  * SEA Boolean
  * @class Bool
  * @extends Primitive
@@ -1167,14 +1168,14 @@ class Bool extends Primitive {
 
 }
 
-/*
+/**
  * SEA Array
  * @class Arr
  * @extends Primitive
  */
 class Arr extends Primitive {
 
-    /*
+    /**
      * @constructor
      * @param {String} name
      * @param {String} template
@@ -1227,14 +1228,14 @@ class Arr extends Primitive {
 
 }
 
-/*
+/**
  * SEA HashMap
  * @class HashMap
  * @extends Primitive
  */
 class HashMap extends Primitive {
 
-    /*
+    /**
      * @constructor
      * @param {String} name
      * @param {String} template
@@ -1293,14 +1294,14 @@ class HashMap extends Primitive {
 
 }
 
-/*
+/**
  * SEA Fallback implementation of Perl Hash
  * @class Hash
  * @extends Primitive
  */
 class Hash extends Primitive {
 
-    /*
+    /**
      * @constructor
      * @param {String} varName
      * @param {String} valueOf
@@ -1313,7 +1314,7 @@ class Hash extends Primitive {
         });
     }
 
-    /*
+    /**
      * Transform a JS Object into a Perl Hash
      * 
      * @static Hash.ObjectToHash
@@ -1376,14 +1377,14 @@ class Hash extends Primitive {
     
 }
 
-/*
+/**
  * SEA Fallback implementation of Perl Scalar
  * @class Scalar
  * @extends Primitive
  */
 class Scalar extends Primitive {
 
-    /*
+    /**
      * @constructor
      * @param {String} varName
      * @param {String} valueOf
