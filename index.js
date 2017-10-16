@@ -653,18 +653,25 @@ class While extends Expr {
  * Foreach block Expr (for HashMap or Hash)
  * @class Foreach
  * @extends Expr
+ * 
+ * @property {HashMap} hash
+ * @property {Routine} routine
  */
 class Foreach extends Expr {
 
     /**
      * @constructor
-     * @param {SEA.HashMap} SEAHash
+     * @param {HashMap} SEAHash
      */
     constructor(SEAHash) {
         super();
         if(SEAHash instanceof HashMap === false) {
             throw new TypeError('Unsupported type for Foreach block!');
         }
+        this.hash       = SEAHash;
+        this.routine    = new Routine({
+            arg: ['key','value']
+        });
     }
 
     /**
@@ -672,7 +679,8 @@ class Foreach extends Expr {
      * @return String
      */
     toString() {
-
+        this.routine.add(this.elements);
+        return this.hash.forEach(this.routine).toString();
     }
 
 }
