@@ -1,6 +1,6 @@
 {
   "name": "sealang",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "SEALang is a super set of Perl5 with static typing. The transpiler is powered by Node.JS",
   "main": "index.js",
   "scripts": {

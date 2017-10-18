@@ -15,7 +15,7 @@ Schema API writed in JavaScript to generate Perl5 code for SEA Compiler.
 - [x] Implement argv!
 - [x] Implement evaluation.
 - [x] Implement PrimeMethod for every stdlib primitives.
-- Work on foreach prototype (Support both HashMap & Hash).
+- [x] Work on foreach prototype (Support both HashMap & Hash).
 - Work on hash tabspace formatting.
 - Implement dump method!
 - Work on Blessed implementation.
